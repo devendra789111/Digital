@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate Hisab Kitab</title>
+    <title>Pro Bank System with Statement</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -44,115 +44,76 @@
             transition: 0.5s;
         }
 
-        /* RED GLOW ALERT when Budget Exceeded */
         .dashboard.alert-mode {
             border: 2px solid var(--neon-red);
             box-shadow: 0 0 30px rgba(255, 0, 85, 0.5);
         }
 
         h1 {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.8rem;
+            text-align: center; margin-bottom: 20px; font-size: 1.8rem;
             background: linear-gradient(to right, #4facfe, #00f2fe);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             text-transform: uppercase;
         }
 
-        /* --- ATM CARD --- */
+        /* ATM CARD */
         .atm-card {
             background: linear-gradient(135deg, #232526, #414345);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            position: relative;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: white;
+            border-radius: 15px; padding: 20px; margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color: white;
         }
         .total-balance { font-size: 2rem; font-weight: 700; margin: 10px 0; }
         .chip { width: 45px; height: 35px; background: linear-gradient(135deg, #fceabb, #f8b500); border-radius: 6px; margin-bottom: 10px; }
 
-        /* --- BUDGET CONTROL SECTION (Added Back) --- */
+        /* BUDGET CONTROL */
         .budget-control {
-            background: rgba(0,0,0,0.3);
-            padding: 15px;
-            border-radius: 15px;
-            margin-bottom: 20px;
+            background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px; margin-bottom: 20px;
             border: 1px solid rgba(255,255,255,0.05);
         }
-
         .budget-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        
-        .budget-input {
-            background: transparent; border: 1px solid rgba(255,255,255,0.2);
-            color: #fff; padding: 5px 10px; border-radius: 5px; width: 100px; text-align: right;
-        }
-        
-        .progress-bg {
-            background: rgba(255,255,255,0.1);
-            height: 10px;
-            border-radius: 10px;
-            overflow: hidden;
-            width: 100%;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            width: 0%;
-            background: var(--neon-green);
-            transition: width 0.5s ease, background 0.3s;
-        }
-
-        .budget-alert-text {
-            color: var(--neon-red);
-            font-weight: bold;
-            display: none;
-            margin-top: 8px;
-            font-size: 0.9rem;
-            animation: blink 1s infinite;
-            text-align: center;
-        }
+        .budget-input { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 5px 10px; border-radius: 5px; width: 100px; text-align: right; }
+        .progress-bg { background: rgba(255,255,255,0.1); height: 10px; border-radius: 10px; overflow: hidden; width: 100%; }
+        .progress-fill { height: 100%; width: 0%; background: var(--neon-green); transition: width 0.5s ease, background 0.3s; }
+        .budget-alert-text { color: var(--neon-red); font-weight: bold; display: none; margin-top: 8px; font-size: 0.9rem; animation: blink 1s infinite; text-align: center; }
         @keyframes blink { 50% { opacity: 0.5; } }
 
-        /* --- PANELS --- */
+        /* PANELS */
         .inc-exp-container { display: flex; gap: 10px; margin-bottom: 20px; }
         .panel { flex: 1; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; text-align: center; }
         .money-plus { color: #2ecc71; font-size: 1.2rem; font-weight: bold; }
         .money-minus { color: #ff4757; font-size: 1.2rem; font-weight: bold; }
 
-        /* --- FORM --- */
+        /* FORM */
         .form-control { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; margin-bottom: 20px; }
         .input-group { margin-bottom: 10px; }
         input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; outline: none; }
-        
         .type-toggle { display: flex; gap: 10px; margin-bottom: 15px; }
         .type-btn { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; background: rgba(255,255,255,0.1); color: #ccc; }
         .type-btn.active.exp { background: #ff4757; color: white; }
         .type-btn.active.inc { background: #2ecc71; color: white; }
-
         .add-btn { width: 100%; padding: 12px; background: linear-gradient(to right, #11998e, #38ef7d); border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; font-size: 1rem; }
 
-        /* --- CHART & LIST --- */
-        .chart-wrapper {
-            background: rgba(0,0,0,0.2);
-            padding: 10px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            height: 280px; /* Fixed Height */
-            display: flex; justify-content: center; align-items: center;
+        /* CHART wrapper */
+        .chart-wrapper { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 15px; margin-bottom: 20px; height: 280px; display: flex; justify-content: center; align-items: center; }
+
+        /* HISTORY HEADER & DOWNLOAD */
+        .history-header-row {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
         }
+        .download-btn {
+            background: #2ecc71; color: #000; border: none; padding: 8px 12px;
+            border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85rem;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .download-btn:hover { background: #27ae60; }
 
         .history-list { list-style: none; max-height: 300px; overflow-y: auto; padding-right: 5px; }
         .transaction { background: rgba(255,255,255,0.08); padding: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-left: 5px solid transparent; }
         .transaction.expense { border-left-color: #ff4757; }
         .transaction.income { border-left-color: #2ecc71; }
-        
         .t-left { display: flex; align-items: center; gap: 10px; overflow: hidden; }
         .t-icon { width: 35px; height: 35px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .t-desc { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; font-weight: 500; }
-        
         .delete-btn { background: none; border: none; color: #ff4757; cursor: pointer; margin-left: 10px; font-size: 1.1rem; }
 
         @media (max-width: 600px) {
@@ -231,12 +192,18 @@
             <canvas id="expenseChart"></canvas>
         </div>
 
-        <h3 style="margin-bottom: 10px;">History</h3>
+        <div class="history-header-row">
+            <h3 style="margin:0;">History</h3>
+            <button class="download-btn" onclick="downloadStatement()">
+                <i class="fas fa-file-download"></i> Download Statement
+            </button>
+        </div>
+        
         <ul id="list" class="history-list"></ul>
     </div>
 
     <script>
-        // --- DOM Elements ---
+        // DOM Elements
         const balance = document.getElementById('balance');
         const money_plus = document.getElementById('money-plus');
         const money_minus = document.getElementById('money-minus');
@@ -246,7 +213,6 @@
         const dateInput = document.getElementById('date');
         const categorySelect = document.getElementById('category');
         
-        // Budget Elements
         const budgetInput = document.getElementById('budgetLimit');
         const progressBar = document.getElementById('progressBar');
         const spentDisplay = document.getElementById('spentDisplay');
@@ -254,7 +220,7 @@
         const budgetAlert = document.getElementById('budgetAlert');
         const mainDashboard = document.getElementById('mainDashboard');
 
-        // --- State ---
+        // State
         let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
         let savedBudget = localStorage.getItem('budgetLimit') || 0;
         let currentType = 'expense';
@@ -263,7 +229,7 @@
         dateInput.valueAsDate = new Date();
         if(savedBudget > 0) budgetInput.value = savedBudget;
 
-        // --- ICONS MAPPING ---
+        // Icons
         const icons = {
             'Food': 'fa-utensils',
             'Travel': 'fa-gas-pump',
@@ -273,36 +239,56 @@
             'Others': 'fa-circle'
         };
 
-        // --- SOUND FUNCTION (Added Back) ---
+        // --- NEW: STATEMENT DOWNLOAD FUNCTION ---
+        function downloadStatement() {
+            if(transactions.length === 0) {
+                alert("No transactions to download!");
+                return;
+            }
+
+            // CSV Header
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "ID,Date,Description,Category,Type,Amount\n";
+
+            // CSV Data
+            transactions.forEach(t => {
+                const type = t.amount < 0 ? "Expense" : "Income";
+                const row = `${t.id},${t.date},${t.text},${t.category},${type},${Math.abs(t.amount)}`;
+                csvContent += row + "\n";
+            });
+
+            // Create Link and Download
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Bank_Statement.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Sound
         function playSound(type) {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (!AudioContext) return;
-            
             const ctx = new AudioContext();
             const osc = ctx.createOscillator();
             const gainNode = ctx.createGain();
-            
             osc.connect(gainNode);
             gainNode.connect(ctx.destination);
-            
             if(type === 'success') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, ctx.currentTime); // High pitch beep
+                osc.type = 'sine'; osc.frequency.setValueAtTime(880, ctx.currentTime); 
                 osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
             } else if (type === 'delete') {
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(200, ctx.currentTime); // Low pitch buzz
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, ctx.currentTime); 
                 osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.1);
             }
-
             gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-
-            osc.start();
-            osc.stop(0.2);
+            osc.start(); osc.stop(0.2);
         }
 
-        // --- CORE FUNCTIONS ---
+        // Functions
         function setType(type) {
             currentType = type;
             document.getElementById('btn-exp').className = `type-btn ${type === 'expense' ? 'active exp' : ''}`;
@@ -324,24 +310,21 @@
             };
 
             transactions.push(transaction);
-            playSound('success'); // Play Sound
+            playSound('success');
             updateDOM();
             updateLocalStorage();
-
-            text.value = '';
-            amount.value = '';
+            text.value = ''; amount.value = '';
         }
 
         function removeTransaction(id) {
             if(confirm('Delete this entry?')) {
                 transactions = transactions.filter(t => t.id !== id);
-                playSound('delete'); // Play Sound
+                playSound('delete');
                 updateDOM();
                 updateLocalStorage();
             }
         }
 
-        // --- BUDGET LOGIC ---
         function saveBudget() {
             savedBudget = +budgetInput.value;
             localStorage.setItem('budgetLimit', savedBudget);
@@ -353,31 +336,23 @@
                 const amounts = transactions.map(t => t.amount);
                 totalExpense = (amounts.filter(item => item < 0).reduce((acc, item) => acc + item, 0) * -1);
             }
-
             spentDisplay.innerText = `Spent: ₹${totalExpense}`;
             limitDisplay.innerText = `Limit: ₹${savedBudget}`;
 
             if(savedBudget > 0) {
                 const percentage = (totalExpense / savedBudget) * 100;
                 progressBar.style.width = `${Math.min(percentage, 100)}%`;
-
                 if(totalExpense > savedBudget) {
-                    progressBar.style.background = '#ff0055'; // Red
-                    budgetAlert.style.display = 'block';
-                    mainDashboard.classList.add('alert-mode'); // Glow
+                    progressBar.style.background = '#ff0055'; budgetAlert.style.display = 'block'; mainDashboard.classList.add('alert-mode');
                 } else {
-                    progressBar.style.background = '#00f260'; // Green
-                    budgetAlert.style.display = 'none';
-                    mainDashboard.classList.remove('alert-mode');
+                    progressBar.style.background = '#00f260'; budgetAlert.style.display = 'none'; mainDashboard.classList.remove('alert-mode');
                 }
             } else {
-                progressBar.style.width = '0%';
-                mainDashboard.classList.remove('alert-mode');
+                progressBar.style.width = '0%'; mainDashboard.classList.remove('alert-mode');
             }
         }
 
         function updateDOM() {
-            // 1. Update List
             list.innerHTML = '';
             transactions.forEach(t => {
                 const sign = t.amount < 0 ? '-' : '+';
@@ -401,7 +376,6 @@
                 list.prepend(item);
             });
 
-            // 2. Update Balance
             const amounts = transactions.map(t => t.amount);
             const total = amounts.reduce((acc, item) => acc + item, 0).toFixed(2);
             const income = amounts.filter(item => item > 0).reduce((acc, item) => acc + item, 0).toFixed(2);
@@ -411,7 +385,6 @@
             money_plus.innerText = `+₹${income}`;
             money_minus.innerText = `-₹${expense}`;
 
-            // 3. Update Budget & Chart
             updateBudgetUI(expense);
             updateChart();
         }
@@ -420,16 +393,10 @@
             if (typeof Chart === 'undefined') return;
             const ctx = document.getElementById('expenseChart').getContext('2d');
             const expenses = transactions.filter(t => t.amount < 0);
-            
-            // Clear chart if no data
-            if(expenses.length === 0) {
-                if(myChart) { myChart.destroy(); myChart = null; }
-                return;
-            }
+            if(expenses.length === 0) { if(myChart) { myChart.destroy(); myChart = null; } return; }
 
             const categories = {};
             expenses.forEach(t => { categories[t.category] = (categories[t.category] || 0) + Math.abs(t.amount); });
-
             if (myChart) myChart.destroy();
 
             myChart = new Chart(ctx, {
@@ -442,11 +409,7 @@
                         borderWidth: 0
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'right', labels: { color: 'white', boxWidth: 10 } } }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: 'white', boxWidth: 10 } } } }
             });
         }
 
@@ -457,5 +420,5 @@
         updateDOM();
     </script>
 </body>
-                                                                          </html>
-                                                                          
+    </html>
+    
