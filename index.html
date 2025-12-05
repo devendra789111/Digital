@@ -1,147 +1,356 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="hi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Devendra Contact Saver</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #6a11cb, #2575fc);
-      color: white;
-      padding: 20px;
-      margin: 0;
-      position: relative;
-    }
-    .container {
-      max-width: 600px;
-      margin: auto;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 15px;
-      padding: 20px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-    }
-    h1 {
-      text-align: center;
-      color: #ffffff;
-    }
-    input, button {
-      padding: 10px;
-      margin: 5px 0;
-      width: 100%;
-      border: none;
-      border-radius: 5px;
-    }
-    input {
-      background-color: #f2f2f2;
-      color: #333;
-    }
-    button {
-      background-color: #00d2ff;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #007acc;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-    li {
-      background: #ffffff22;
-      margin: 5px 0;
-      padding: 10px;
-      border-radius: 5px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .delete-btn {
-      background-color: #ff4d4d;
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .delete-btn:hover {
-      background-color: #cc0000;
-    }
-    .count-badge {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background-color: #ffcc00;
-      color: #333;
-      padding: 10px 15px;
-      border-radius: 30px;
-      font-weight: bold;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-      z-index: 999;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Personal Bank System</title>
+    <style>
+        :root {
+            --primary: #6a11cb;
+            --secondary: #2575fc;
+            --accent: #ff0055;
+            --glass: rgba(255, 255, 255, 0.1);
+            --text: #ffffff;
+            --shadow-light: rgba(255, 255, 255, 0.1);
+            --shadow-dark: rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            min-height: 100vh;
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* 3D Container */
+        .dashboard {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: 
+                0 20px 50px rgba(0,0,0,0.5),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            margin-top: 20px;
+            position: relative;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        /* Header */
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, #00f260, #0575e6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        /* Total Balance Card (Highlighted) */
+        .balance-card {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 
+                0 10px 20px rgba(0,0,0,0.3),
+                inset 2px 2px 5px rgba(255,255,255,0.3);
+            margin-bottom: 30px;
+            transform: translateZ(20px);
+            transition: transform 0.3s;
+        }
+
+        .balance-card:hover {
+            transform: translateZ(30px) scale(1.02);
+        }
+
+        .balance-title { font-size: 1.2rem; opacity: 0.8; }
+        .balance-amount { font-size: 3rem; font-weight: bold; margin-top: 10px; }
+
+        /* Input Section (Form) */
+        .transaction-form {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 15px;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        input, select {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5), inset -2px -2px 5px rgba(255,255,255,0.05);
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus, select:focus {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 10px var(--secondary);
+        }
+
+        /* 3D Button */
+        .btn-add {
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 75, 43, 0.4);
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .btn-add:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 5px rgba(255, 75, 43, 0.4);
+        }
+
+        /* Transaction List */
+        .history-header {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+
+        .transaction-list {
+            list-style: none;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .transaction-item {
+            background: rgba(255, 255, 255, 0.05);
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 5px solid var(--secondary);
+            animation: slideIn 0.3s ease-out;
+            transition: transform 0.2s;
+        }
+
+        .transaction-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.01);
+        }
+
+        .t-info h4 { font-size: 1.1rem; margin-bottom: 5px; }
+        .t-info small { color: #aaa; }
+        .t-amount { font-size: 1.2rem; font-weight: bold; color: #00f260; margin-right: 15px;}
+        
+        .delete-btn {
+            background: transparent;
+            border: none;
+            color: #ff4b2b;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: 0.2s;
+        }
+        .delete-btn:hover { transform: scale(1.2); }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        ::-webkit-scrollbar-thumb { background: var(--secondary); border-radius: 4px; }
+
+        /* Animations */
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .transaction-form {
+                grid-template-columns: 1fr;
+            }
+            .dashboard { padding: 15px; }
+            h1 { font-size: 1.8rem; }
+            .balance-amount { font-size: 2.2rem; }
+            
+            .transaction-item {
+                flex-direction: column;
+                align-items: flex-start;
+                position: relative;
+            }
+            .t-amount {
+                margin-top: 10px;
+                margin-bottom: 10px;
+            }
+            .delete-btn {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="count-badge" id="countBadge">Contacts: 0</div>
-  <div class="container">
-    <h1>Devendra Contact Saver</h1>
-    <input type="text" id="name" placeholder="Contact Name">
-    <input type="text" id="phone" placeholder="Phone Number">
-    <button onclick="addContact()">Add Contact</button>
-    <ul id="contactList"></ul>
-    <button onclick="downloadVCF()">Download VCF File</button>
-  </div>  <script>
-    let contacts = JSON.parse(localStorage.getItem('contacts')) || [];
-    const contactList = document.getElementById('contactList');
-    const countBadge = document.getElementById('countBadge');
 
-    function renderContacts() {
-      contactList.innerHTML = '';
-      contacts.forEach((contact, index) => {
-        const li = document.createElement('li');
-        li.innerHTML = `${contact.name} - ${contact.phone} <button class="delete-btn" onclick="deleteContact(${index})">Delete</button>`;
-        contactList.appendChild(li);
-      });
-      updateCount();
-    }
+    <div class="dashboard">
+        <h1>Digital Hisab Kitab</h1>
 
-    function addContact() {
-      const name = document.getElementById('name').value.trim();
-      const phone = document.getElementById('phone').value.trim();
-      if (name && phone) {
-        contacts.push({ name, phone });
-        localStorage.setItem('contacts', JSON.stringify(contacts));
-        document.getElementById('name').value = '';
-        document.getElementById('phone').value = '';
-        renderContacts();
-      }
-    }
+        <div class="balance-card">
+            <div class="balance-title">कुल खर्चा (Total Expense)</div>
+            <div class="balance-amount" id="total-display">₹0.00</div>
+        </div>
 
-    function deleteContact(index) {
-      contacts.splice(index, 1);
-      localStorage.setItem('contacts', JSON.stringify(contacts));
-      renderContacts();
-    }
+        <div class="transaction-form">
+            <input type="text" id="desc" placeholder="कहाँ खर्च हुआ? (Description)">
+            <input type="number" id="amount" placeholder="राशि (Amount)">
+            <input type="date" id="date">
+            <select id="category">
+                <option value="General">सामान्य (General)</option>
+                <option value="Food">खाना (Food)</option>
+                <option value="Travel">यात्रा (Travel)</option>
+                <option value="Shopping">शॉपिंग (Shopping)</option>
+                <option value="Bills">बिल्स (Bills)</option>
+            </select>
+            <button class="btn-add" onclick="addTransaction()">Add Entry</button>
+        </div>
 
-    function downloadVCF() {
-      let vcfData = '';
-      contacts.forEach(contact => {
-        vcfData += `BEGIN:VCARD\nVERSION:3.0\nFN:${contact.name}\nTEL:${contact.phone}\nEND:VCARD\n`;
-      });
-      const blob = new Blob([vcfData], { type: 'text/vcard' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'contacts.vcf';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
+        <div class="history-header">लेन-देन का इतिहास (History)</div>
+        <ul class="transaction-list" id="list">
+            </ul>
+    </div>
 
-    function updateCount() {
-      countBadge.textContent = `Contacts: ${contacts.length}`;
-    }
+    <script>
+        // Data Storage
+        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
 
-    renderContacts();
-  </script></body>
+        const list = document.getElementById('list');
+        const totalDisplay = document.getElementById('total-display');
+        const descInput = document.getElementById('desc');
+        const amountInput = document.getElementById('amount');
+        const dateInput = document.getElementById('date');
+        const categoryInput = document.getElementById('category');
+
+        // Set Today's Date by default
+        dateInput.valueAsDate = new Date();
+
+        // Initialize
+        function init() {
+            list.innerHTML = '';
+            transactions.forEach(addTransactionDOM);
+            updateValues();
+        }
+
+        // Add New Transaction
+        function addTransaction() {
+            if(descInput.value.trim() === '' || amountInput.value.trim() === '') {
+                alert('कृपया विवरण और राशि भरें (Please add details)');
+                return;
+            }
+
+            const transaction = {
+                id: generateID(),
+                desc: descInput.value,
+                amount: +amountInput.value,
+                date: dateInput.value,
+                category: categoryInput.value
+            };
+
+            transactions.push(transaction);
+            addTransactionDOM(transaction);
+            updateValues();
+            updateLocalStorage();
+
+            // Reset Inputs
+            descInput.value = '';
+            amountInput.value = '';
+            dateInput.valueAsDate = new Date();
+        }
+
+        // Generate ID
+        function generateID() {
+            return Math.floor(Math.random() * 100000000);
+        }
+
+        // Add to DOM (HTML)
+        function addTransactionDOM(transaction) {
+            const item = document.createElement('li');
+            item.classList.add('transaction-item');
+
+            // Format Date
+            const dateObj = new Date(transaction.date);
+            const dateStr = dateObj.toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+            item.innerHTML = `
+                <div class="t-info">
+                    <h4>${transaction.desc}</h4>
+                    <small>${dateStr} | ${transaction.category} | ID: #${transaction.id}</small>
+                </div>
+                <div style="display:flex; align-items:center;">
+                    <span class="t-amount">₹${formatMoney(transaction.amount)}</span>
+                    <button class="delete-btn" onclick="removeTransaction(${transaction.id})">❌</button>
+                </div>
+            `;
+
+            list.prepend(item); // Add new items to the top
+        }
+
+        // Update Total
+        function updateValues() {
+            const amounts = transactions.map(t => t.amount);
+            const total = amounts.reduce((acc, item) => acc + item, 0);
+            totalDisplay.innerText = `₹${formatMoney(total)}`;
+        }
+
+        // Format Money (Indian Style)
+        function formatMoney(amount) {
+            return amount.toLocaleString('en-IN', {
+                maximumFractionDigits: 2,
+                minimumFractionDigits: 2
+            });
+        }
+
+        // Remove Transaction
+        function removeTransaction(id) {
+            transactions = transactions.filter(t => t.id !== id);
+            updateLocalStorage();
+            init();
+        }
+
+        // Update Local Storage
+        function updateLocalStorage() {
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+        }
+
+        // Run App
+        init();
+
+    </script>
+</body>
 </html>
