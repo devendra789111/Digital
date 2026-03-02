@@ -1,441 +1,198 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
-<meta charset="UTF-8">
-<title>Banking Mock Test App</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Quality Education</title>
+    <style>
+        :root { --primary: #2c3e50; --success: #27ae60; --danger: #c0392b; --warning: #f39c12; --info: #2980b9; --bg: #ecf0f1; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: var(--bg); margin: 0; padding: 20px; }
+        
+        .header { background: var(--primary); color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
+        .header h1 { margin: 0; font-size: 24px; }
+        .btn-refresh { position: absolute; right: 20px; top: 20px; background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px;}
+        .btn-refresh:hover { background: #219653; }
 
-<style>
-/* ===== BASE ===== */
-*{
- box-sizing:border-box;
- font-family:Segoe UI,Roboto;
- -webkit-tap-highlight-color:transparent;
- transition:.25s ease;
-}
-button:focus,.subject-card:focus,.option:focus{outline:none}
+        .dashboard { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); overflow-x: auto; }
+        
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th, td { padding: 12px 15px; text-align: center; border-bottom: 1px solid #ddd; font-size: 14px; }
+        th { background-color: var(--primary); color: white; position: sticky; top: 0;}
+        tr:hover { background-color: #f1f2f6; }
 
-body{
- margin:0;
- background:#020617;
- color:#e5e7eb;
- overflow-x:hidden;
-}
-:root{
- --primary:#4f46e5;
- --border:#1e293b;
- --green:#22c55e;
- --red:#ef4444;
-}
+        /* Action Buttons for Admin */
+        .action-btn { padding: 6px 10px; margin: 2px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; color: white; transition: 0.2s;}
+        .btn-approve { background: var(--success); } .btn-approve:hover { background: #1e8449; }
+        .btn-force-out { background: var(--danger); } .btn-force-out:hover { background: #922b21; }
+        .btn-clear-break { background: #e67e22; } .btn-clear-break:hover { background: #ca6f1e; }
+        .btn-end-duty { background: #8e44ad; } .btn-end-duty:hover { background: #732d91; }
 
-/* ===== FUTURISTIC BACKGROUND ===== */
-body::before{
- content:"";
- position:fixed;
- inset:0;
- background:
-  radial-gradient(600px at top left, rgba(79,70,229,.15), transparent 40%),
-  radial-gradient(600px at bottom right, rgba(34,197,94,.12), transparent 40%);
- pointer-events:none;
- z-index:-1;
-}
+        .status-badge { padding: 4px 8px; border-radius: 12px; font-weight: bold; font-size: 12px; color: white; }
+        .bg-present { background: var(--success); }
+        .bg-leave { background: var(--warning); color: black; }
+        .bg-duty { background: #8e44ad; }
+        .bg-break { background: #e67e22; }
 
-/* ===== HEADER ===== */
-header{
- display:flex;
- justify-content:space-between;
- align-items:center;
- padding:14px 18px;
- border-bottom:1px solid var(--border);
- backdrop-filter:blur(8px);
-}
-button{
- background:var(--primary);
- color:#fff;
- border:none;
- padding:10px 14px;
- border-radius:12px;
- cursor:pointer;
- box-shadow:0 6px 18px rgba(79,70,229,.35);
-}
-button:active{
- transform:scale(.96);
- box-shadow:0 2px 8px rgba(79,70,229,.4);
-}
-
-/* ===== LAYOUT ===== */
-.container{max-width:900px;margin:auto;padding:20px}
-.card{
- background:#020617;
- border-radius:18px;
- padding:20px;
- margin-bottom:20px;
- border:1px solid rgba(79,70,229,.25);
- backdrop-filter:blur(8px);
- box-shadow:0 0 18px rgba(79,70,229,.25);
- animation:fadeUp .35s ease;
-}
-.hidden{display:none}
-
-@keyframes fadeUp{
- from{opacity:0;transform:translateY(10px)}
- to{opacity:1;transform:none}
-}
-
-/* ===== SUBJECTS ===== */
-.subject-grid{
- display:grid;
- grid-template-columns:repeat(2,1fr);
- gap:14px
-}
-.subject-card{
- border:1px solid var(--border);
- border-radius:16px;
- padding:18px;
- text-align:center;
- cursor:pointer;
- position:relative;
- overflow:hidden;
-}
-.subject-card::after{
- content:"";
- position:absolute;
- inset:0;
- background:linear-gradient(120deg,transparent,rgba(255,255,255,.08),transparent);
- transform:translateX(-100%);
-}
-.subject-card:hover::after{transform:translateX(100%)}
-.subject-card:hover{
- transform:translateY(-4px) scale(1.02);
- border-color:var(--green);
- box-shadow:0 0 22px rgba(79,70,229,.4);
-}
-.badge-count{margin-top:6px;font-size:14px;opacity:.8}
-
-/* ===== TEST LIST ===== */
-.test-list{
- display:grid;
- grid-template-columns:repeat(2,1fr);
- gap:12px
-}
-
-/* ===== QUESTIONS ===== */
-.option{
- border:1px solid var(--border);
- padding:12px;
- border-radius:12px;
- margin:8px 0;
- cursor:pointer;
- background:rgba(255,255,255,.02);
-}
-.option:hover{
- background:rgba(79,70,229,.15);
- border-color:rgba(79,70,229,.6);
-}
-.option.active{
- background:var(--primary);
- box-shadow:0 0 12px rgba(79,70,229,.6);
-}
-.correct{background:var(--green);box-shadow:0 0 14px rgba(34,197,94,.7)}
-.wrong{background:var(--red);box-shadow:0 0 14px rgba(239,68,68,.7)}
-
-.timer{
- font-weight:bold;
- margin-bottom:10px;
- color:#fbbf24;
- letter-spacing:.5px;
-}
-.timer::after{
- content:"";
- display:block;
- height:2px;
- margin-top:6px;
- background:linear-gradient(90deg,var(--primary),transparent);
-}
-
-/* ===== RESULT ===== */
-.score-grid{
- display:grid;
- grid-template-columns:repeat(2,1fr);
- gap:12px
-}
-.score-box{
- border:1px solid var(--border);
- border-radius:14px;
- padding:14px;
- text-align:center;
- background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));
-}
-.score-box:hover{transform:translateY(-3px)}
-
-.badge{
- margin-top:12px;
- padding:10px;
- border-radius:12px;
- text-align:center;
- font-weight:bold;
- box-shadow:0 0 18px rgba(79,70,229,.4);
-}
-.good{background:rgba(34,197,94,.2)}
-.avg{background:rgba(234,179,8,.2)}
-.bad{background:rgba(239,68,68,.2)}
-
-.exam-box{
- margin-bottom:15px;
- padding:12px;
- border:1px solid var(--border);
- border-radius:14px;
- background:linear-gradient(135deg,rgba(79,70,229,.15),rgba(34,197,94,.08));
- box-shadow:0 0 18px rgba(79,70,229,.35);
-}
-
-.hint-box{
- margin-top:10px;
- padding:10px;
- border:1px dashed var(--border);
- border-radius:12px;
- font-size:14px;
- opacity:.85
-}
-
-textarea{
- width:100%;
- height:200px;
- background:#020617;
- color:#fff;
- border:1px solid var(--border);
- border-radius:12px;
- padding:12px
-}
-</style>
+        #loading { text-align: center; font-size: 18px; font-weight: bold; color: var(--info); padding: 20px; display: none; }
+    </style>
 </head>
-
 <body>
 
-<header>
- <b>🏦 Banking Mock Test</b>
- <div>
-  <button onclick="setExamDate()">Exam Date</button>
-  <button onclick="openImporter()">Upload</button>
-  <button onclick="goHome()">Home</button>
- </div>
-</header>
+    <div class="header">
+        <h1>👑 Quality Education - Admin Dashboard</h1>
+        <button class="btn-refresh" onclick="fetchData()">🔄 Refresh Live Data</button>
+    </div>
 
-<div class="container">
-
-<div class="card" id="home">
- <div id="examCountdown" class="exam-box hidden"></div>
- <h3>Select Subject</h3>
- <div class="subject-grid">
-  <div class="subject-card" onclick="openTests('Computer')">💻 Computer<div class="badge-count" id="cCount"></div></div>
-  <div class="subject-card" onclick="openTests('Static GK')">📘 Static GK<div class="badge-count" id="sCount"></div></div>
-  <div class="subject-card" onclick="openTests('Current Affairs')">📰 Current Affairs<div class="badge-count" id="aCount"></div></div>
-  <div class="subject-card" onclick="openTests('Mix')">🔀 Mix Test<div class="badge-count" id="mCount"></div></div>
- </div>
-</div>
-
-<div class="card hidden" id="testPage">
- <h3 id="testTitle"></h3>
- <div id="testList" class="test-list"></div>
- <br><button onclick="goHome()">Back</button>
-</div>
-
-<div class="card hidden" id="test">
- <div class="timer" id="timer"></div>
- <div id="progress"></div>
- <h3 id="qText"></h3>
- <div id="options"></div>
- <button onclick="nextQ()">Next</button>
-</div>
-
-<div class="card hidden" id="result">
- <h2>Scorecard</h2>
- <div class="score-grid">
-  <div class="score-box"><h3 id="rTotal"></h3><p>Total</p></div>
-  <div class="score-box"><h3 id="rCorrect"></h3><p>Correct</p></div>
-  <div class="score-box"><h3 id="rWrong"></h3><p>Wrong</p></div>
-  <div class="score-box"><h3 id="rPercent"></h3><p>Percentage</p></div>
- </div>
- <div id="compareBox" class="hint-box hidden"></div>
- <div id="memoryHint" class="hint-box hidden"></div>
- <button onclick="reviseWrong()">🔁 Revise Wrong Questions</button>
- <button onclick="showAnalysis()">Analysis</button>
- <button onclick="goHome()">Home</button>
-</div>
-
-<div class="card hidden" id="analysis">
- <h3>Detailed Analysis</h3>
- <div id="analysisBox"></div>
- <button onclick="goHome()">Home</button>
-</div>
-
-<div class="card hidden" id="importer">
- <h3>Upload Questions (JSON)</h3>
- <textarea id="jsonInput"></textarea>
- <button onclick="importQuestions()">Add</button>
- <button onclick="closeImporter()">Close</button>
-</div>
-
-</div>
+    <div class="dashboard">
+        <div id="loading">⏳ गूगल शीट से लाइव डेटा लाया जा रहा है... कृपया प्रतीक्षा करें।</div>
+        <table id="adminTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Emp ID</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Punch In</th>
+                    <th>Break Time</th>
+                    <th>Punch Out</th>
+                    <th>Net Hours</th>
+                    <th>⚙️ Admin Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                </tbody>
+        </table>
+    </div>
 
 <script>
-/* ===== CORE LOGIC (UNCHANGED) ===== */
-const KEY="BANKING_QS", HISTORY_KEY="TEST_HISTORY";
-const TEST_SIZE=25, TIME_PER_Q=30;
+    // आपका नया Google Apps Script API URL
+    const API_URL = "https://script.google.com/macros/s/AKfycbxgZYvk1mkaHXZbwcYbtM126gBlZUWGcEjIEECBklkYmtxsn1vMgvEehNSfHEsNL_jMuQ/exec";
 
-function norm(s){
- s=s.toLowerCase().replace(/\s+/g,"");
- if(s.includes("computer"))return"Computer";
- if(s.includes("static"))return"Static GK";
- if(s.includes("current"))return"Current Affairs";
- return"Computer";
-}
+    // 1. Google Sheet से लाइव डेटा मंगाना
+    function fetchData() {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('tableBody').innerHTML = '';
 
-let allQuestions=JSON.parse(localStorage.getItem(KEY))||[];
-allQuestions=allQuestions.map(q=>({...q,subject:norm(q.subject)}));
-localStorage.setItem(KEY,JSON.stringify(allQuestions));
+        fetch(API_URL)
+            .then(response => response.json())
+            .then(res => {
+                document.getElementById('loading').style.display = 'none';
+                if(res.status === "Success" && res.data) {
+                    renderTable(res.data.reverse()); // नया डेटा ऊपर दिखाने के लिए Reverse किया
+                } else {
+                    alert("⚠️ डेटा लाने में समस्या हुई!");
+                }
+            })
+            .catch(error => {
+                document.getElementById('loading').style.display = 'none';
+                alert("इंटरनेट कनेक्शन या URL में समस्या है।");
+            });
+    }
 
-let currentSubject="",currentTest=[],currentTestNo=0;
-let i=0,score=0,answers=[],time=0,startTime=0,timerInt;
+    // 2. टेबल को स्क्रीन पर दिखाना और बटन सेट करना
+    function renderTable(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
 
-function updateCounts(){
- cCount.innerText=allQuestions.filter(q=>q.subject==="Computer").length+" Questions";
- sCount.innerText=allQuestions.filter(q=>q.subject==="Static GK").length+" Questions";
- aCount.innerText=allQuestions.filter(q=>q.subject==="Current Affairs").length+" Questions";
- mCount.innerText=allQuestions.length+" Questions";
-}
-updateCounts();
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            
+            // Status Badge Formatting
+            let statusHtml = row.status;
+            if(row.status.includes('Present')) statusHtml = `<span class="status-badge bg-present">🟢 Present</span>`;
+            else if(row.status.includes('Leave')) statusHtml = `<span class="status-badge bg-leave">🟡 ${row.status}</span>`;
+            else if(row.status.includes('Duty')) statusHtml = `<span class="status-badge bg-duty">🏃‍♂️ On Duty</span>`;
+            else if(row.status.includes('Break')) statusHtml = `<span class="status-badge bg-break">☕ On Break</span>`;
 
-function goHome(){
- clearInterval(timerInt);
- document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden"));
- home.classList.remove("hidden");
-}
+            // Admin Actions Buttons Logic
+            let actionsHtml = '';
+            
+            // अगर लीव पर है, तो Approve का बटन
+            if(row.status === 'Leave') {
+                actionsHtml += `<button class="action-btn btn-approve" onclick="updateRecord('${row.date}', '${row.empId}', 'status', 'Leave (Approved ✅)')">✔️ Approve Leave</button>`;
+            }
+            // अगर प्रेजेंट है और पंच-आउट नहीं किया
+            if(row.status === 'Present' && row.punchOut === '-') {
+                actionsHtml += `<button class="action-btn btn-force-out" onclick="forcePunchOut('${row.date}', '${row.empId}', '${row.punchIn}', '${row.breakTime}')">🛑 Force Punch Out</button>`;
+            }
+            // अगर ब्रेक पर अटका है
+            if(row.status.includes('Break')) {
+                actionsHtml += `<button class="action-btn btn-clear-break" onclick="updateRecord('${row.date}', '${row.empId}', 'status', 'Present')">❌ End Break</button>`;
+            }
+            // अगर ट्रेनिंग/ड्यूटी पर अटका है
+            if(row.status.includes('Duty')) {
+                actionsHtml += `<button class="action-btn btn-end-duty" onclick="updateRecord('${row.date}', '${row.empId}', 'status', 'Present')">✅ End Duty</button>`;
+            }
 
-function openTests(sub){
- currentSubject=sub;
- document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden"));
- testPage.classList.remove("hidden");
- testTitle.innerText=sub+" – Available Tests";
- let pool=sub==="Mix"?allQuestions:allQuestions.filter(q=>q.subject===sub);
- testList.innerHTML="";
- Math.ceil(pool.length/TEST_SIZE)&&
- [...Array(Math.ceil(pool.length/TEST_SIZE))].forEach((_,t)=>{
-  let b=document.createElement("button");
-  b.textContent=`Test ${t+1}`;
-  b.onclick=()=>startTest(pool,t);
-  testList.appendChild(b);
- });
-}
+            if(actionsHtml === '') actionsHtml = '<span style="color:#7f8c8d; font-size:12px;">No Action Needed</span>';
 
-function startTest(pool,t){
- currentTest=pool.slice(t*TEST_SIZE,(t+1)*TEST_SIZE);
- currentTestNo=t+1;i=score=0;answers=[];
- document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden"));
- test.classList.remove("hidden");
- time=currentTest.length*TIME_PER_Q;
- startTime=time;
- timerInt=setInterval(()=>{
-  timer.innerText=`⏱ ${time--}s`;
-  if(time<0){clearInterval(timerInt);showResult();}
- },1000);
- loadQ();
-}
+            tr.innerHTML = `
+                <td><strong>${row.date}</strong></td>
+                <td>${row.empId}</td>
+                <td>${row.name}</td>
+                <td>${statusHtml}</td>
+                <td>${row.punchIn}</td>
+                <td>${row.breakTime}</td>
+                <td>${row.punchOut}</td>
+                <td><strong>${row.netHours}</strong></td>
+                <td>${actionsHtml}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
 
-function loadQ(){
- let q=currentTest[i];
- progress.innerText=`Question ${i+1}/${currentTest.length}`;
- qText.innerText=q.q;
- options.innerHTML="";
- q.options.forEach((o,idx)=>{
-  options.innerHTML+=`<div class="option" onclick="selectOpt(${idx})">${o}</div>`;
- });
-}
+    // 3. Google Sheet में बदलाव (Update) भेजना
+    function updateRecord(date, empId, field, newValue) {
+        if(!confirm(`क्या आप वाकई ${empId} का डेटा बदलना चाहते हैं?`)) return;
 
-let sel=null;
-function selectOpt(n){
- sel=n;
- document.querySelectorAll(".option").forEach(o=>o.classList.remove("active"));
- document.querySelectorAll(".option")[n].classList.add("active");
-}
-function nextQ(){
- if(sel==null)return alert("Select option");
- answers.push(sel);
- if(sel===currentTest[i].answer)score++;
- sel=null;
- ++i<currentTest.length?loadQ():showResult();
-}
+        document.getElementById('loading').style.display = 'block';
+        
+        let payload = { action: "update", date: date, empId: empId };
+        payload[field] = newValue; // जो फील्ड बदलनी है, वो सेट कर दी
 
-function showResult(){
- clearInterval(timerInt);
- document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden"));
- result.classList.remove("hidden");
- let percent=Math.round(score/currentTest.length*100);
- rTotal.innerText=currentTest.length;
- rCorrect.innerText=score;
- rWrong.innerText=currentTest.length-score;
- rPercent.innerText=percent+"%";
- let hist=JSON.parse(localStorage.getItem(HISTORY_KEY))||{};
- let key=currentSubject+"_TEST_"+currentTestNo;
- if(hist[key]){
-  let p=hist[key];
-  compareBox.classList.remove("hidden");
-  compareBox.innerHTML=`Previous ${p.percent}% → Now ${percent}%`;
- }
- hist[key]={score,percent,date:Date.now()};
- localStorage.setItem(HISTORY_KEY,JSON.stringify(hist));
-}
+        fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert("✅ " + data.message);
+            fetchData(); // बदलाव के बाद टेबल को फिर से रिफ्रेश करें
+        });
+    }
 
-function showAnalysis(){
- document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden"));
- analysis.classList.remove("hidden");
- analysisBox.innerHTML="";
- currentTest.forEach((q,i)=>{
-  analysisBox.innerHTML+=`<p><b>Q${i+1}. ${q.q}</b></p>`+
-  q.options.map((o,j)=>`<div class="option ${j===q.answer?"correct":j===answers[i]?"wrong":""}">${o}</div>`).join("")+
-  `<p>${q.explanation||""}</p><hr>`;
- });
-}
+    // 4. इमरजेंसी पंच-आउट (कैलकुलेशन के साथ)
+    function forcePunchOut(date, empId, punchInTimeStr, breakTimeStr) {
+        if(!confirm(`क्या आप ${empId} को जबरदस्ती Punch-Out करना चाहते हैं?`)) return;
 
-function reviseWrong(){
- currentTest=currentTest.filter((q,i)=>answers[i]!==q.answer);
- if(!currentTest.length)return alert("No wrong questions 🎉");
- i=score=0;answers=[];
- document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden"));
- test.classList.remove("hidden");
- loadQ();
-}
+        let now = new Date();
+        let punchOutStr = now.toLocaleTimeString('en-US', { hour12: true });
+        
+        // यह एक बेसिक इमरजेंसी अपडेट है जो एडमिन द्वारा किया जाएगा
+        let payload = { 
+            action: "update", 
+            date: date, 
+            empId: empId,
+            punchOut: punchOutStr,
+            netHours: "Forced Out by Admin" // एडमिन की निशानी
+        };
 
-const EXAM_KEY="EXAM_DATE";
-function setExamDate(){
- let d=prompt("Enter exam date (YYYY-MM-DD)");
- if(!d)return;
- localStorage.setItem(EXAM_KEY,d);
- renderExam();
-}
-function renderExam(){
- let d=localStorage.getItem(EXAM_KEY);
- if(!d)return;
- examCountdown.classList.remove("hidden");
- examCountdown.innerHTML=`🗓️ ${d} | ⏳ ${Math.ceil((new Date(d)-new Date())/86400000)} days left`;
-}
-renderExam();
+        document.getElementById('loading').style.display = 'block';
+        fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert("✅ कर्मचारी को Punch Out कर दिया गया है!");
+            fetchData();
+        });
+    }
 
-function openImporter(){importer.classList.remove("hidden")}
-function closeImporter(){importer.classList.add("hidden")}
-function importQuestions(){
- try{
-  JSON.parse(jsonInput.value).forEach(q=>{
-   if(!allQuestions.some(e=>e.q===q.q))
-    allQuestions.push({...q,subject:norm(q.subject)});
-  });
-  localStorage.setItem(KEY,JSON.stringify(allQuestions));
-  updateCounts();
-  closeImporter();jsonInput.value="";
-  alert("Questions added");
- }catch{alert("Invalid JSON")}
-}
+    // पेज खुलते ही डेटा लोड करें
+    window.onload = fetchData;
 </script>
 
 </body>
- </html>
+</html>
