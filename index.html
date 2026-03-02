@@ -3,94 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Quality Education</title>
+    <title>HR Admin Dashboard - Quality Education</title>
     <style>
-        :root { --primary: #2c3e50; --success: #27ae60; --danger: #c0392b; --warning: #f39c12; --info: #2980b9; --bg: #ecf0f1; }
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: var(--bg); margin: 0; padding: 20px; }
+        :root { 
+            --bg-dark: #1e1e2d; --bg-light: #f3f6f9; --primary: #3699ff; 
+            --success: #1bc5bd; --danger: #f64e60; --warning: #ffa800; 
+            --info: #8950fc; --text-dark: #3f4254; --text-muted: #b5b5c3;
+        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { margin: 0; background-color: var(--bg-light); color: var(--text-dark); display: flex; height: 100vh; overflow: hidden; }
         
-        .header { background: var(--primary); color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
-        .header h1 { margin: 0; font-size: 24px; }
-        .btn-refresh { position: absolute; right: 20px; top: 20px; background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px;}
-        .btn-refresh:hover { background: #219653; }
+        /* Login Screen */
+        #loginScreen { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; justify-content: center; align-items: center; flex-direction: column;}
+        .login-box { background: white; padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 90%; max-width: 400px; }
+        .login-box h2 { margin-top: 0; color: var(--bg-dark); }
+        .login-box input { width: 100%; padding: 12px; margin: 15px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
+        .login-box input:focus { border-color: var(--primary); }
+        .login-box button { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s;}
+        .login-box button:hover { background: #237adb; }
 
-        .dashboard { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); overflow-x: auto; }
+        /* Sidebar */
+        .sidebar { width: 260px; background-color: var(--bg-dark); color: white; padding: 25px 15px; display: flex; flex-direction: column; }
+        .logo { font-size: 20px; font-weight: bold; color: white; text-align: center; margin-bottom: 40px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;}
+        .menu-item { padding: 12px 15px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; transition: 0.3s; color: var(--text-muted); font-weight: 500;}
+        .menu-item:hover, .menu-item.active { background-color: rgba(255,255,255,0.05); color: var(--primary); }
+        .menu-item i { margin-right: 10px; }
+
+        /* Main Content */
+        .main-content { flex: 1; display: flex; flex-direction: column; padding: 25px 30px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { margin: 0; font-size: 24px; color: var(--bg-dark); }
         
+        .top-controls { display: flex; gap: 15px; }
+        .search-bar { padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; width: 250px; font-size: 14px; outline: none;}
+        .btn-refresh { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; box-shadow: 0 4px 6px rgba(54,153,255,0.2);}
+        .btn-refresh:hover { background: #237adb; }
+
+        /* Stats Cards */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); display: flex; flex-direction: column; }
+        .stat-card .title { font-size: 13px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-bottom: 10px;}
+        .stat-card .value { font-size: 28px; font-weight: bold; color: var(--bg-dark); }
+        .stat-card.present { border-left: 5px solid var(--success); }
+        .stat-card.leave { border-left: 5px solid var(--warning); }
+        .stat-card.duty { border-left: 5px solid var(--info); }
+        .stat-card.total { border-left: 5px solid var(--primary); }
+
+        /* Table Area */
+        .table-container { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-        th, td { padding: 12px 15px; text-align: center; border-bottom: 1px solid #ddd; font-size: 14px; }
-        th { background-color: var(--primary); color: white; position: sticky; top: 0;}
-        tr:hover { background-color: #f1f2f6; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #ebedf3; font-size: 14px; }
+        th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;}
+        tr:hover { background-color: #f8f9fa; }
 
-        /* Action Buttons for Admin */
-        .action-btn { padding: 6px 10px; margin: 2px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; color: white; transition: 0.2s;}
-        .btn-approve { background: var(--success); } .btn-approve:hover { background: #1e8449; }
-        .btn-force-out { background: var(--danger); } .btn-force-out:hover { background: #922b21; }
-        .btn-clear-break { background: #e67e22; } .btn-clear-break:hover { background: #ca6f1e; }
-        .btn-end-duty { background: #8e44ad; } .btn-end-duty:hover { background: #732d91; }
+        /* Status Badges */
+        .badge { padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block;}
+        .badge-success { background: #c9f7f5; color: #1bc5bd; }
+        .badge-warning { background: #fff4de; color: #ffa800; }
+        .badge-danger { background: #ffe2e5; color: #f64e60; }
+        .badge-info { background: #eee5ff; color: #8950fc; }
 
-        .status-badge { padding: 4px 8px; border-radius: 12px; font-weight: bold; font-size: 12px; color: white; }
-        .bg-present { background: var(--success); }
-        .bg-leave { background: var(--warning); color: black; }
-        .bg-duty { background: #8e44ad; }
-        .bg-break { background: #e67e22; }
+        /* Action Buttons */
+        .action-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn-sm { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: 0.2s; color: white;}
+        .btn-approve { background: var(--success); } .btn-approve:hover { background: #15a39c; }
+        .btn-reject { background: var(--danger); } .btn-reject:hover { background: #e33b4d; }
+        .btn-force { background: var(--bg-dark); } .btn-force:hover { background: #11111a; }
+        .btn-end { background: var(--warning); color: #fff; } .btn-end:hover { background: #e69600; }
 
-        #loading { text-align: center; font-size: 18px; font-weight: bold; color: var(--info); padding: 20px; display: none; }
+        #loading { text-align: center; font-weight: bold; color: var(--primary); padding: 30px; display: none; font-size: 16px;}
+        .toast { position: fixed; bottom: 20px; right: 20px; background: var(--bg-dark); color: white; padding: 15px 25px; border-radius: 8px; font-weight: bold; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateY(100px); opacity: 0; transition: 0.3s; z-index: 3000;}
+        .toast.show { transform: translateY(0); opacity: 1; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>👑 Quality Education - Admin Dashboard</h1>
-        <button class="btn-refresh" onclick="fetchData()">🔄 Refresh Live Data</button>
+    <div id="loginScreen">
+        <div class="login-box">
+            <h2>🔒 Admin Access</h2>
+            <p style="color: #7f8c8d; font-size: 13px;">Please enter admin password to continue.</p>
+            <input type="password" id="adminPassInput" placeholder="Enter Password">
+            <button onclick="checkPassword()">Login to Dashboard</button>
+        </div>
     </div>
 
-    <div class="dashboard">
-        <div id="loading">⏳ गूगल शीट से लाइव डेटा लाया जा रहा है... कृपया प्रतीक्षा करें।</div>
-        <table id="adminTable">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Emp ID</th>
-                    <th>Name</th>
-                    <th>Status</th>
-                    <th>Punch In</th>
-                    <th>Break Time</th>
-                    <th>Punch Out</th>
-                    <th>Net Hours</th>
-                    <th>⚙️ Admin Actions</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                </tbody>
-        </table>
+    <div class="sidebar">
+        <div class="logo">🏢 Quality Ed. HR</div>
+        <div class="menu-item active">📊 Live Dashboard</div>
+        <div class="menu-item" onclick="changeAdminPassword()">⚙️ Change Password</div>
+        <div class="menu-item" onclick="logout()" style="margin-top: auto; color: #f64e60;">🚪 Logout</div>
     </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>Overview & Control</h1>
+            <div class="top-controls">
+                <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Search Name or ID..." onkeyup="filterTable()">
+                <button class="btn-refresh" onclick="fetchData()">🔄 Refresh Data</button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <span class="title">Total Records (Loaded)</span>
+                <span class="value" id="statTotal">0</span>
+            </div>
+            <div class="stat-card present">
+                <span class="title">Present Today</span>
+                <span class="value" id="statPresent">0</span>
+            </div>
+            <div class="stat-card duty">
+                <span class="title">On Official Duty</span>
+                <span class="value" id="statDuty">0</span>
+            </div>
+            <div class="stat-card leave">
+                <span class="title">Pending Leaves</span>
+                <span class="value" id="statLeave">0</span>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div id="loading">⏳ Fetching live data from Google Servers...</div>
+            <table id="adminTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Emp ID</th>
+                        <th>Name</th>
+                        <th>Live Status</th>
+                        <th>Punch In</th>
+                        <th>Break/Penalty</th>
+                        <th>Punch Out</th>
+                        <th>Net Hours</th>
+                        <th>⚡ Quick Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="toastMessage" class="toast">✅ Action Successful!</div>
 
 <script>
-    // आपका नया Google Apps Script API URL
+    // ==========================================
+    // ⚙️ SYSTEM SETTINGS & URL
+    // ==========================================
     const API_URL = "https://script.google.com/macros/s/AKfycbxgZYvk1mkaHXZbwcYbtM126gBlZUWGcEjIEECBklkYmtxsn1vMgvEehNSfHEsNL_jMuQ/exec";
+    
+    // Default Admin Password (कस्टम पासवर्ड localStorage में सेव होगा)
+    let currentAdminPass = localStorage.getItem('adminPanelPass') || "admin123";
 
-    // 1. Google Sheet से लाइव डेटा मंगाना
+    // --- 1. LOGIN & SECURITY SYSTEM ---
+    function checkPassword() {
+        const input = document.getElementById('adminPassInput').value;
+        if(input === currentAdminPass) {
+            document.getElementById('loginScreen').style.display = 'none';
+            fetchData(); // लॉगिन होते ही डेटा लोड करो
+        } else {
+            alert("❌ Incorrect Password!");
+        }
+    }
+
+    function logout() {
+        document.getElementById('adminPassInput').value = '';
+        document.getElementById('loginScreen').style.display = 'flex';
+    }
+
+    function changeAdminPassword() {
+        const oldPass = prompt("Enter Current Password:");
+        if(oldPass === currentAdminPass) {
+            const newPass = prompt("Enter NEW Admin Password:");
+            if(newPass && newPass.length >= 4) {
+                localStorage.setItem('adminPanelPass', newPass);
+                currentAdminPass = newPass;
+                showToast("✅ Password Changed Successfully!");
+            } else { alert("Password too short or empty."); }
+        } else { alert("❌ Old password incorrect."); }
+    }
+
+    // --- 2. FETCH & RENDER DATA ---
     function fetchData() {
         document.getElementById('loading').style.display = 'block';
         document.getElementById('tableBody').innerHTML = '';
 
         fetch(API_URL)
-            .then(response => response.json())
+            .then(res => res.json())
             .then(res => {
                 document.getElementById('loading').style.display = 'none';
                 if(res.status === "Success" && res.data) {
-                    renderTable(res.data.reverse()); // नया डेटा ऊपर दिखाने के लिए Reverse किया
-                } else {
-                    alert("⚠️ डेटा लाने में समस्या हुई!");
-                }
+                    let reversedData = res.data.reverse(); // सबसे नया ऊपर
+                    renderTable(reversedData);
+                    calculateStats(reversedData);
+                } else { showToast("⚠️ Error fetching data."); }
             })
             .catch(error => {
                 document.getElementById('loading').style.display = 'none';
-                alert("इंटरनेट कनेक्शन या URL में समस्या है।");
+                alert("Internet or URL Error: " + error);
             });
     }
 
-    // 2. टेबल को स्क्रीन पर दिखाना और बटन सेट करना
     function renderTable(data) {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
@@ -98,100 +211,132 @@
         data.forEach(row => {
             const tr = document.createElement('tr');
             
-            // Status Badge Formatting
-            let statusHtml = row.status;
-            if(row.status.includes('Present')) statusHtml = `<span class="status-badge bg-present">🟢 Present</span>`;
-            else if(row.status.includes('Leave')) statusHtml = `<span class="status-badge bg-leave">🟡 ${row.status}</span>`;
-            else if(row.status.includes('Duty')) statusHtml = `<span class="status-badge bg-duty">🏃‍♂️ On Duty</span>`;
-            else if(row.status.includes('Break')) statusHtml = `<span class="status-badge bg-break">☕ On Break</span>`;
+            // 🎨 Smart Badges Styling
+            let statusHtml = `<span class="badge badge-success">${row.status}</span>`;
+            if(row.status.includes('Leave') || row.status.includes('Pending')) statusHtml = `<span class="badge badge-warning">${row.status}</span>`;
+            else if(row.status.includes('Duty')) statusHtml = `<span class="badge badge-info">🏃‍♂️ ${row.status}</span>`;
+            else if(row.status.includes('Break')) statusHtml = `<span class="badge badge-danger">☕ ${row.status}</span>`;
+            else if(row.status.includes('Off') || row.status.includes('Holiday')) statusHtml = `<span class="badge" style="background:#e4e6ef; color:#3f4254;">🏖️ ${row.status}</span>`;
 
-            // Admin Actions Buttons Logic
-            let actionsHtml = '';
+            // ⚡ Admin Actions Logic (This fixes the Leave Bug)
+            let actionsHtml = `<div class="action-btns">`;
             
-            // अगर लीव पर है, तो Approve का बटन
-            if(row.status === 'Leave') {
-                actionsHtml += `<button class="action-btn btn-approve" onclick="updateRecord('${row.date}', '${row.empId}', 'status', 'Leave (Approved ✅)')">✔️ Approve Leave</button>`;
+            // 1. Leave Approval System
+            if(row.status.includes('Pending') || row.status.includes('Leave')) {
+                actionsHtml += `<button class="btn-sm btn-approve" onclick="updateRecord('${row.date}', '${row.empId}', 'status', 'Approved ✅')">Approve ✅</button>`;
+                actionsHtml += `<button class="btn-sm btn-reject" onclick="updateRecord('${row.date}', '${row.empId}', 'status', 'Rejected ❌')">Reject ❌</button>`;
             }
-            // अगर प्रेजेंट है और पंच-आउट नहीं किया
-            if(row.status === 'Present' && row.punchOut === '-') {
-                actionsHtml += `<button class="action-btn btn-force-out" onclick="forcePunchOut('${row.date}', '${row.empId}', '${row.punchIn}', '${row.breakTime}')">🛑 Force Punch Out</button>`;
+            // 2. Clear Break / Duty
+            else if(row.status.includes('Break') || row.status.includes('Duty')) {
+                actionsHtml += `<button class="btn-sm btn-end" onclick="updateRecord('${row.date}', '${row.empId}', 'status', 'Present')">End Status 🔙</button>`;
             }
-            // अगर ब्रेक पर अटका है
-            if(row.status.includes('Break')) {
-                actionsHtml += `<button class="action-btn btn-clear-break" onclick="updateRecord('${row.date}', '${row.empId}', 'status', 'Present')">❌ End Break</button>`;
+            // 3. Force Punch Out (If Present and not yet punched out)
+            else if(row.status.includes('Present') && row.punchOut === '-') {
+                actionsHtml += `<button class="btn-sm btn-force" onclick="forcePunchOut('${row.date}', '${row.empId}')">Force Out 🛑</button>`;
+            } 
+            else {
+                actionsHtml += `<span style="color:var(--text-muted); font-size:12px; font-weight:600;">No Action Needed</span>`;
             }
-            // अगर ट्रेनिंग/ड्यूटी पर अटका है
-            if(row.status.includes('Duty')) {
-                actionsHtml += `<button class="action-btn btn-end-duty" onclick="updateRecord('${row.date}', '${row.empId}', 'status', 'Present')">✅ End Duty</button>`;
-            }
+            actionsHtml += `</div>`;
 
-            if(actionsHtml === '') actionsHtml = '<span style="color:#7f8c8d; font-size:12px;">No Action Needed</span>';
+            let timeDetails = `<small>Break: ${row.breakTime}<br>Pen: ${row.penalty}</small>`;
 
             tr.innerHTML = `
                 <td><strong>${row.date}</strong></td>
                 <td>${row.empId}</td>
-                <td>${row.name}</td>
+                <td style="font-weight:600;">${row.name}</td>
                 <td>${statusHtml}</td>
                 <td>${row.punchIn}</td>
-                <td>${row.breakTime}</td>
+                <td>${timeDetails}</td>
                 <td>${row.punchOut}</td>
-                <td><strong>${row.netHours}</strong></td>
+                <td><strong style="color:var(--success);">${row.netHours}</strong></td>
                 <td>${actionsHtml}</td>
             `;
             tbody.appendChild(tr);
         });
     }
 
-    // 3. Google Sheet में बदलाव (Update) भेजना
+    // --- 3. ANALYTICS STATS ---
+    function calculateStats(data) {
+        // सिर्फ आज की तारीख (Today) का डेटा कैलकुलेट करने के लिए
+        const todayStr = new Date().toLocaleDateString('en-GB'); 
+        let presentCount = 0, leaveCount = 0, dutyCount = 0;
+
+        data.forEach(row => {
+            if(row.date === todayStr) {
+                if(row.status.includes('Present') || row.status.includes('Break')) presentCount++;
+                if(row.status.includes('Pending') || row.status.includes('Leave')) leaveCount++;
+                if(row.status.includes('Duty')) dutyCount++;
+            }
+        });
+
+        document.getElementById('statTotal').innerText = data.length;
+        document.getElementById('statPresent').innerText = presentCount;
+        document.getElementById('statDuty').innerText = dutyCount;
+        document.getElementById('statLeave').innerText = leaveCount;
+    }
+
+    // --- 4. ACTION FUNCTIONS ---
     function updateRecord(date, empId, field, newValue) {
-        if(!confirm(`क्या आप वाकई ${empId} का डेटा बदलना चाहते हैं?`)) return;
+        if(!confirm(`Proceed to update ${empId}'s record to: ${newValue}?`)) return;
 
         document.getElementById('loading').style.display = 'block';
-        
         let payload = { action: "update", date: date, empId: empId };
-        payload[field] = newValue; // जो फील्ड बदलनी है, वो सेट कर दी
+        payload[field] = newValue;
 
-        fetch(API_URL, {
-            method: "POST",
-            body: JSON.stringify(payload)
-        })
+        fetch(API_URL, { method: "POST", body: JSON.stringify(payload) })
         .then(res => res.json())
         .then(data => {
-            alert("✅ " + data.message);
-            fetchData(); // बदलाव के बाद टेबल को फिर से रिफ्रेश करें
+            showToast("Update Applied Successfully!");
+            fetchData(); 
         });
     }
 
-    // 4. इमरजेंसी पंच-आउट (कैलकुलेशन के साथ)
-    function forcePunchOut(date, empId, punchInTimeStr, breakTimeStr) {
-        if(!confirm(`क्या आप ${empId} को जबरदस्ती Punch-Out करना चाहते हैं?`)) return;
+    function forcePunchOut(date, empId) {
+        if(!confirm(`Force Punch-Out for ${empId}?`)) return;
 
         let now = new Date();
         let punchOutStr = now.toLocaleTimeString('en-US', { hour12: true });
         
-        // यह एक बेसिक इमरजेंसी अपडेट है जो एडमिन द्वारा किया जाएगा
         let payload = { 
-            action: "update", 
-            date: date, 
-            empId: empId,
-            punchOut: punchOutStr,
-            netHours: "Forced Out by Admin" // एडमिन की निशानी
+            action: "update", date: date, empId: empId,
+            punchOut: punchOutStr, netHours: "Forced (Admin)" 
         };
 
         document.getElementById('loading').style.display = 'block';
-        fetch(API_URL, {
-            method: "POST",
-            body: JSON.stringify(payload)
-        })
+        fetch(API_URL, { method: "POST", body: JSON.stringify(payload) })
         .then(res => res.json())
         .then(data => {
-            alert("✅ कर्मचारी को Punch Out कर दिया गया है!");
+            showToast("Employee Punched Out!");
             fetchData();
         });
     }
 
-    // पेज खुलते ही डेटा लोड करें
-    window.onload = fetchData;
+    // --- 5. UTILITIES ---
+    function filterTable() {
+        let input = document.getElementById("searchInput").value.toUpperCase();
+        let tr = document.getElementById("adminTable").getElementsByTagName("tr");
+        for (let i = 1; i < tr.length; i++) {
+            let tdId = tr[i].getElementsByTagName("td")[1];
+            let tdName = tr[i].getElementsByTagName("td")[2];
+            if (tdId || tdName) {
+                let txtValueId = tdId.textContent || tdId.innerText;
+                let txtValueName = tdName.textContent || tdName.innerText;
+                if (txtValueId.toUpperCase().indexOf(input) > -1 || txtValueName.toUpperCase().indexOf(input) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }       
+        }
+    }
+
+    function showToast(msg) {
+        let toast = document.getElementById("toastMessage");
+        toast.innerText = msg;
+        toast.className = "toast show";
+        setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+    }
 </script>
 
 </body>
