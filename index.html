@@ -11,21 +11,23 @@
         .nav-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
         .nav-tabs button { padding: 10px 20px; font-size: 16px; border: none; background: #ddd; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .nav-tabs button.active { background: #1a237e; color: white; }
-        .section { display: none; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 950px; margin: auto; }
+        .section { display: none; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 1000px; margin: auto; }
         .section.active { display: block; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        
+        /* Table Styles */
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; background: white; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
         th { background-color: #1a237e; color: white; }
+        
         .btn-approve { background: #4CAF50; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin: 2px; }
         .btn-reject { background: #f44336; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin: 2px; }
         .dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        .dot-green { background-color: #4CAF50; }
-        .dot-red { background-color: #f44336; }
-        .dot-orange { background-color: #FF9800; }
-        .dot-purple { background-color: #9C27B0; }
+        .dot-green { background-color: #4CAF50; } .dot-red { background-color: #f44336; }
+        .dot-orange { background-color: #FF9800; } .dot-purple { background-color: #9C27B0; }
         input[type="text"], input[type="password"] { padding: 10px; width: 60%; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; }
         .btn-primary { background: #1a237e; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        #pdfArea { background: white; padding: 15px; }
+        #pdfArea { padding: 15px; background: white; }
     </style>
 </head>
 <body>
@@ -43,19 +45,27 @@
 
     <div id="liveStatus" class="section active">
         <h3>Live Employee Status <span style="font-size:12px; color:gray;">(Auto-refreshing)</span></h3>
-        <table>
-            <thead><tr><th>Employee ID</th><th>Name</th><th>Current Status</th></tr></thead>
-            <tbody id="liveTableBody"><tr><td colspan="3">Loading...</td></tr></tbody>
-        </table>
+        <div class="table-responsive">
+            <table>
+                <thead><tr><th>Employee ID</th><th>Name</th><th>Current Status</th></tr></thead>
+                <tbody id="liveTableBody"><tr><td colspan="3">Loading...</td></tr></tbody>
+            </table>
+        </div>
     </div>
 
     <div id="leaveRequests" class="section">
         <h3>Employee Leave Requests</h3>
         <button class="btn-primary" onclick="loadLeaves()">🔄 Refresh Leaves</button>
-        <table>
-            <thead><tr><th>Date</th><th>ID</th><th>Name</th><th>Type</th><th>Reason</th><th>Action / Status</th></tr></thead>
-            <tbody id="leaveTableBody"><tr><td colspan="6">Loading...</td></tr></tbody>
-        </table>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Applied On</th><th>Leave Date</th><th>ID</th><th>Name</th><th>Type</th><th>Reason</th><th>Action / Status</th>
+                    </tr>
+                </thead>
+                <tbody id="leaveTableBody"><tr><td colspan="7">Loading...</td></tr></tbody>
+            </table>
+        </div>
     </div>
 
     <div id="searchEmp" class="section">
@@ -66,17 +76,19 @@
         
         <div id="pdfArea" style="margin-top: 20px;">
             <h3 id="pdfTitle" style="display:none; text-align:center; color:#1a237e; margin-bottom: 15px;">Attendance Report</h3>
-            <table id="empSearchTable">
-                <thead>
-                    <tr>
-                        <th>Date</th><th>ID</th><th>Name</th><th>Status</th><th>In Time</th><th>Out Time</th>
-                        <th>Break Time</th><th>Train Time</th><th>Total Hrs</th>
-                    </tr>
-                </thead>
-                <tbody id="searchTableBody">
-                    <tr><td colspan="9">Search an ID to view logs</td></tr>
-                </tbody>
-            </table>
+            <div id="pdfTableWrapper">
+                <table id="empSearchTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th><th>ID</th><th>Name</th><th>Status</th><th>In Time</th><th>Out Time</th>
+                            <th>Break Time</th><th>Train Time</th><th>Total Hrs</th>
+                        </tr>
+                    </thead>
+                    <tbody id="searchTableBody">
+                        <tr><td colspan="9">Search an ID to view logs</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -112,7 +124,6 @@
             let dateStr = `${dd}/${mm}/${yyyy}`; 
             
             try {
-                // nocache joda gaya hai taki purana data show na ho
                 let res = await fetch(`${SCRIPT_URL}?action=getLiveStatus&date=${dateStr}&nocache=${Date.now()}`);
                 let data = await res.json();
                 let tbody = document.getElementById("liveTableBody");
@@ -135,44 +146,49 @@
 
         async function loadLeaves() {
             try {
-                // nocache joda gaya hai taki browser purani request na dikhaye
                 let res = await fetch(`${SCRIPT_URL}?action=getPendingLeaves&nocache=${Date.now()}`);
                 let data = await res.json();
                 let tbody = document.getElementById("leaveTableBody");
                 tbody.innerHTML = "";
-                if(data.length === 0) return tbody.innerHTML = `<tr><td colspan="6">No leave requests</td></tr>`;
+                if(data.length === 0) return tbody.innerHTML = `<tr><td colspan="7">No leave requests</td></tr>`;
                 
-                // Latest request upar dikhane ke liye .reverse()
+                // Reversed array taaki latest upar dikhe
                 data.reverse().forEach(req => {
                     let actionHtml = "";
                     if (req.status === "Pending") {
-                        actionHtml = `<button class="btn-approve" onclick="updateLeave('${req.date}', '${req.id}', 'Approved')">Approve</button> 
-                                      <button class="btn-reject" onclick="updateLeave('${req.date}', '${req.id}', 'Rejected')">Reject</button>`;
+                        // FIX: Ab ID aur Date nahi, balki Unique ReqId (req.reqId) se pass kar rahe hain
+                        actionHtml = `<button class="btn-approve" onclick="updateLeave('${req.reqId}', 'Approved')">Approve</button> 
+                                      <button class="btn-reject" onclick="updateLeave('${req.reqId}', 'Rejected')">Reject</button>`;
                     } else if (req.status === "Approved") {
                         actionHtml = `<span style="color: green; font-weight: bold;">✅ Approved</span>`;
                     } else if (req.status === "Rejected") {
                         actionHtml = `<span style="color: red; font-weight: bold;">❌ Rejected</span>`;
                     }
 
+                    // Leave Date (req.leaveDate) alag se show hogi
                     tbody.innerHTML += `<tr>
-                        <td>${req.date}</td><td>${req.id}</td><td>${req.name}</td><td>${req.type}</td><td>${req.reason}</td>
+                        <td style="font-size: 12px; color: gray;">${req.date}</td>
+                        <td style="font-weight:bold; color:#1a237e;">${req.leaveDate}</td>
+                        <td>${req.id}</td><td>${req.name}</td><td>${req.type}</td><td>${req.reason}</td>
                         <td>${actionHtml}</td>
                     </tr>`;
                 });
             } catch(e) { console.log("Leave fetch error"); }
         }
 
-        async function updateLeave(date, id, status) {
+        async function updateLeave(reqId, status) {
+            if(!reqId) return alert("System Error: Request ID missing.");
             if(!confirm(`Are you sure you want to Mark this leave as ${status}?`)) return;
             
             await fetch(SCRIPT_URL, { 
                 method: "POST", 
                 headers: { "Content-Type": "text/plain;charset=utf-8" }, 
-                body: JSON.stringify({ action: "updateLeave", date: date, id: id, newStatus: status }) 
+                // FIX: backend (V5) ke hisab se reqId pass kiya gaya
+                body: JSON.stringify({ action: "updateLeave", reqId: reqId, newStatus: status }) 
             });
             
-            alert(`Leave ${status} successfully! Employee will see this update in their app.`); 
-            loadLeaves(); // Turant table update karne ke liye
+            alert(`Leave ${status} successfully!`); 
+            loadLeaves(); 
         }
 
         async function searchEmployee() {
@@ -193,6 +209,7 @@
                 rawDataArray.forEach(jsonStr => {
                     try {
                         let emp = JSON.parse(jsonStr);
+                        if (!emp) return; // safeguard
                         let totalWorkSecs = (emp.workSecs || 0) + (emp.trainSecs || 0);
                         let bTime = formatTime(emp.breakSecs);
                         let tTime = formatTime(emp.trainSecs);
@@ -221,15 +238,21 @@
             let title = document.getElementById('pdfTitle');
             title.style.display = 'block';
             
+            // FIX: Blank PDF aane ka kaaran 'overflow' hota hai, isliye ise fix kiya
+            let wrapper = document.getElementById('pdfTableWrapper');
+            wrapper.style.overflow = 'visible';
+            
             let opt = { 
-                margin: 0.5, 
+                margin: 0.3, 
                 filename: `Report_Emp_${document.getElementById("searchId").value}.pdf`, 
-                html2canvas: { scale: 2 }, 
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, scrollY: 0 }, 
                 jsPDF: { unit: 'in', format: 'landscape', orientation: 'landscape' } 
             };
             
             html2pdf().set(opt).from(element).save().then(() => { 
                 title.style.display = 'none'; 
+                wrapper.style.overflow = 'auto'; // Export hone ke baad wapas normal kar diya
             });
         }
 
