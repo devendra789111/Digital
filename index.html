@@ -16,8 +16,8 @@
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
         th { background-color: #1a237e; color: white; }
-        .btn-approve { background: #4CAF50; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-reject { background: #f44336; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-approve { background: #4CAF50; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin: 2px; }
+        .btn-reject { background: #f44336; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin: 2px; }
         .dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; }
         .dot-green { background-color: #4CAF50; }
         .dot-red { background-color: #f44336; }
@@ -50,10 +50,10 @@
     </div>
 
     <div id="leaveRequests" class="section">
-        <h3>Pending Leave Requests</h3>
+        <h3>Employee Leave Requests</h3>
         <button class="btn-primary" onclick="loadLeaves()">🔄 Refresh Leaves</button>
         <table>
-            <thead><tr><th>Date</th><th>ID</th><th>Name</th><th>Type</th><th>Reason</th><th>Action</th></tr></thead>
+            <thead><tr><th>Date</th><th>ID</th><th>Name</th><th>Type</th><th>Reason</th><th>Action / Status</th></tr></thead>
             <tbody id="leaveTableBody"><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
     </div>
@@ -90,7 +90,7 @@
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw4QGYfqyPKpATDwqaFI9eArrH82GuqWBV7_q3PUbl1QiqcaD77wLt1HzojcouT--18Eg/exec";
 
-        const EMP_LIST = { "1111": "Devendra Kumar", "1112": "Rahul Sharma", "1113": "Priya Singh", "1234": "Ram", "0000": "Manish Sharma", "1114": "Amit Verma" };
+        const EMP_LIST = { "1111": "Devendra Kumar", "1112": "Rahul Sharma", "1113": "Priya Singh", "1114": "Amit Verma" };
 
         function showSection(id) {
             document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
@@ -112,7 +112,8 @@
             let dateStr = `${dd}/${mm}/${yyyy}`; 
             
             try {
-                let res = await fetch(`${SCRIPT_URL}?action=getLiveStatus&date=${dateStr}`);
+                // nocache joda gaya hai taki purana data show na ho
+                let res = await fetch(`${SCRIPT_URL}?action=getLiveStatus&date=${dateStr}&nocache=${Date.now()}`);
                 let data = await res.json();
                 let tbody = document.getElementById("liveTableBody");
                 tbody.innerHTML = "";
@@ -134,28 +135,36 @@
 
         async function loadLeaves() {
             try {
-                let res = await fetch(`${SCRIPT_URL}?action=getPendingLeaves`);
+                // nocache joda gaya hai taki browser purani request na dikhaye
+                let res = await fetch(`${SCRIPT_URL}?action=getPendingLeaves&nocache=${Date.now()}`);
                 let data = await res.json();
                 let tbody = document.getElementById("leaveTableBody");
                 tbody.innerHTML = "";
-                if(data.length === 0) return tbody.innerHTML = `<tr><td colspan="6">No pending requests</td></tr>`;
+                if(data.length === 0) return tbody.innerHTML = `<tr><td colspan="6">No leave requests</td></tr>`;
                 
-                data.forEach(req => {
+                // Latest request upar dikhane ke liye .reverse()
+                data.reverse().forEach(req => {
+                    let actionHtml = "";
+                    if (req.status === "Pending") {
+                        actionHtml = `<button class="btn-approve" onclick="updateLeave('${req.date}', '${req.id}', 'Approved')">Approve</button> 
+                                      <button class="btn-reject" onclick="updateLeave('${req.date}', '${req.id}', 'Rejected')">Reject</button>`;
+                    } else if (req.status === "Approved") {
+                        actionHtml = `<span style="color: green; font-weight: bold;">✅ Approved</span>`;
+                    } else if (req.status === "Rejected") {
+                        actionHtml = `<span style="color: red; font-weight: bold;">❌ Rejected</span>`;
+                    }
+
                     tbody.innerHTML += `<tr>
                         <td>${req.date}</td><td>${req.id}</td><td>${req.name}</td><td>${req.type}</td><td>${req.reason}</td>
-                        <td>
-                            <button class="btn-approve" onclick="updateLeave('${req.date}', '${req.id}', 'Approved')">Approve</button> 
-                            <button class="btn-reject" onclick="updateLeave('${req.date}', '${req.id}', 'Rejected')">Reject</button>
-                        </td>
+                        <td>${actionHtml}</td>
                     </tr>`;
                 });
             } catch(e) { console.log("Leave fetch error"); }
         }
 
         async function updateLeave(date, id, status) {
-            if(!confirm(`Are you sure you want to ${status} this leave?`)) return;
+            if(!confirm(`Are you sure you want to Mark this leave as ${status}?`)) return;
             
-            // text/plain prevents CORS issues for POST requests
             await fetch(SCRIPT_URL, { 
                 method: "POST", 
                 headers: { "Content-Type": "text/plain;charset=utf-8" }, 
@@ -163,7 +172,7 @@
             });
             
             alert(`Leave ${status} successfully! Employee will see this update in their app.`); 
-            loadLeaves();
+            loadLeaves(); // Turant table update karne ke liye
         }
 
         async function searchEmployee() {
@@ -173,8 +182,8 @@
             tbody.innerHTML = `<tr><td colspan="9">Fetching exact data from Database...</td></tr>`;
             
             try {
-                let res = await fetch(`${SCRIPT_URL}?action=getEmpData&id=${id}`);
-                let rawDataArray = await res.json(); // Array of JSON strings
+                let res = await fetch(`${SCRIPT_URL}?action=getEmpData&id=${id}&nocache=${Date.now()}`);
+                let rawDataArray = await res.json();
                 
                 tbody.innerHTML = "";
                 if(rawDataArray.length === 0) return tbody.innerHTML = `<tr><td colspan="9">No records found for this ID. Data hasn't synced yet.</td></tr>`;
@@ -193,7 +202,7 @@
                         if(emp.mode === 'break') statusText = "☕ On Break";
                         else if(emp.mode === 'train') statusText = "💼 Training";
                         
-                        let dateToPrint = emp.recordDate || emp.date || "-"; // compatibility
+                        let dateToPrint = emp.recordDate || emp.date || "-";
 
                         tbody.innerHTML += `<tr>
                             <td>${dateToPrint}</td><td>${emp.id}</td><td>${emp.name}</td><td>${statusText}</td>
@@ -240,7 +249,7 @@
 
         window.onload = () => { 
             loadLiveStatus(); 
-            setInterval(loadLiveStatus, 5000); // 5 second auto-refresh
+            setInterval(loadLiveStatus, 5000); 
         }; 
     </script>
 </body>
