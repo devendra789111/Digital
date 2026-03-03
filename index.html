@@ -8,25 +8,33 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
         .header { background: #1a237e; color: white; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .nav-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
-        .nav-tabs button { padding: 10px 20px; font-size: 16px; border: none; background: #ddd; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .nav-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .nav-tabs button { padding: 10px 15px; font-size: 15px; border: none; background: #ddd; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
         .nav-tabs button.active { background: #1a237e; color: white; }
-        .section { display: none; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 1000px; margin: auto; }
+        .section { display: none; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 1050px; margin: auto; }
         .section.active { display: block; }
         
         /* Table Styles */
-        .table-responsive { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; background: white; }
+        .table-responsive { overflow-x: auto; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; background: white; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
         th { background-color: #1a237e; color: white; }
         
         .btn-approve { background: #4CAF50; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin: 2px; }
         .btn-reject { background: #f44336; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin: 2px; }
+        .btn-force { background: #FF9800; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size:12px; }
+        
         .dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; }
         .dot-green { background-color: #4CAF50; } .dot-red { background-color: #f44336; }
         .dot-orange { background-color: #FF9800; } .dot-purple { background-color: #9C27B0; }
-        input[type="text"], input[type="password"] { padding: 10px; width: 60%; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; }
+        
+        input[type="text"], input[type="password"], input[type="number"], input[type="date"] { padding: 10px; width: 100%; max-width: 300px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; box-sizing: border-box; }
         .btn-primary { background: #1a237e; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        
+        .form-grid { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; background: #f5f5f5; padding: 15px; border-radius: 8px; border: 1px solid #ddd; align-items: center; }
+        .form-group { display: flex; flex-direction: column; text-align: left; }
+        .form-group label { font-size: 13px; font-weight: bold; color: #333; margin-bottom: 5px; }
+        
         #pdfArea { padding: 15px; background: white; }
     </style>
 </head>
@@ -37,18 +45,53 @@
     </div>
 
     <div class="nav-tabs">
-        <button class="active" onclick="showSection('liveStatus')">🔴 Live Status</button>
-        <button onclick="showSection('leaveRequests')">📅 Leave Requests</button>
-        <button onclick="showSection('searchEmp')">🔍 Search & PDF</button>
-        <button onclick="showSection('settings')">⚙️ Settings</button>
+        <button id="tab-liveStatus" onclick="showSection('liveStatus')">🔴 Live Status</button>
+        <button id="tab-manageEmp" onclick="showSection('manageEmp')">👥 Manage Employees</button>
+        <button id="tab-leaveRequests" onclick="showSection('leaveRequests')">📅 Leave Requests</button>
+        <button id="tab-searchEmp" onclick="showSection('searchEmp')">🔍 Search & PDF</button>
+        <button id="tab-settings" onclick="showSection('settings')">⚙️ Settings</button>
     </div>
 
-    <div id="liveStatus" class="section active">
-        <h3>Live Employee Status <span style="font-size:12px; color:gray;">(Auto-refreshing)</span></h3>
+    <div id="liveStatus" class="section">
+        <h3>Live Employee Status</h3>
+        <button class="btn-primary" onclick="loadLiveStatus()">🔄 Refresh Now</button>
         <div class="table-responsive">
             <table>
-                <thead><tr><th>Employee ID</th><th>Name</th><th>Current Status</th></tr></thead>
-                <tbody id="liveTableBody"><tr><td colspan="3">Loading...</td></tr></tbody>
+                <thead><tr><th>ID</th><th>Name</th><th>Current Status</th><th>Admin Action</th></tr></thead>
+                <tbody id="liveTableBody"><tr><td colspan="4">Loading Live Data...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="manageEmp" class="section">
+        <h3>📝 Register New Employee</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="regName" placeholder="e.g. Rahul Kumar" required>
+            </div>
+            <div class="form-group">
+                <label>Mobile Number</label>
+                <input type="number" id="regMobile" placeholder="10-digit number" required>
+            </div>
+            <div class="form-group">
+                <label>Aadhar Number</label>
+                <input type="number" id="regAadhar" placeholder="12-digit Aadhar" required>
+            </div>
+            <div class="form-group">
+                <label>Joining Date</label>
+                <input type="date" id="regJoinDate" required>
+            </div>
+            <div class="form-group" style="justify-content: flex-end;">
+                <button class="btn-primary" style="background: #2E7D32; height: 40px; margin-bottom: 10px;" onclick="registerEmployee()">➕ Add Employee</button>
+            </div>
+        </div>
+
+        <h3>📋 All Registered Employees</h3>
+        <div class="table-responsive">
+            <table>
+                <thead><tr><th>ID</th><th>Name</th><th>Mobile</th><th>Joining Date</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="empTableBody"><tr><td colspan="6">Loading Employee List...</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -58,25 +101,23 @@
         <button class="btn-primary" onclick="loadLeaves()">🔄 Refresh Leaves</button>
         <div class="table-responsive">
             <table>
-                <thead>
-                    <tr>
-                        <th>Applied On</th><th>Leave Date</th><th>ID</th><th>Name</th><th>Type</th><th>Reason</th><th>Action / Status</th>
-                    </tr>
-                </thead>
-                <tbody id="leaveTableBody"><tr><td colspan="7">Loading...</td></tr></tbody>
+                <thead><tr><th>Applied On</th><th>Leave Date</th><th>ID</th><th>Name</th><th>Type</th><th>Reason</th><th>Action / Status</th></tr></thead>
+                <tbody id="leaveTableBody"><tr><td colspan="7">Loading Requests...</td></tr></tbody>
             </table>
         </div>
     </div>
 
     <div id="searchEmp" class="section">
         <h3>Search Employee Attendance</h3>
-        <input type="text" id="searchId" placeholder="Enter Employee ID (e.g. 1111)">
-        <button class="btn-primary" onclick="searchEmployee()">🔍 Search</button>
-        <button class="btn-primary" style="background:#D32F2F;" onclick="downloadEmpPDF()">📄 Download PDF</button>
+        <div style="margin-bottom: 15px;">
+            <input type="text" id="searchId" placeholder="Enter Employee ID (e.g. 1111)">
+            <button class="btn-primary" onclick="searchEmployee()">🔍 Search</button>
+            <button class="btn-primary" style="background:#D32F2F;" onclick="downloadEmpPDF()">📄 Download Color PDF</button>
+        </div>
         
-        <div id="pdfArea" style="margin-top: 20px;">
+        <div id="pdfArea">
             <h3 id="pdfTitle" style="display:none; text-align:center; color:#1a237e; margin-bottom: 15px;">Attendance Report</h3>
-            <div id="pdfTableWrapper">
+            <div id="pdfTableWrapper" class="table-responsive">
                 <table id="empSearchTable">
                     <thead>
                         <tr>
@@ -93,31 +134,128 @@
     </div>
 
     <div id="settings" class="section">
-        <h3>Change Admin Password</h3>
-        <input type="password" id="newPassword" placeholder="Enter New Password">
-        <button class="btn-primary" onclick="changePassword()">Update Password</button>
-        <p id="passMsg" style="color: green; font-weight: bold; margin-top: 10px;"></p>
+        <h3>Update System Passwords</h3>
+        <div style="max-width: 400px; margin: auto; text-align: left;">
+            <label style="font-weight:bold;">New Admin Password:</label>
+            <input type="text" id="newAdminPass" placeholder="Enter New Admin Pass">
+            
+            <label style="font-weight:bold; margin-top:15px; display:block;">New Training Password:</label>
+            <input type="text" id="newTrainPass" placeholder="Enter New Training Pass">
+            
+            <button class="btn-primary" style="width:100%; margin-top: 15px;" onclick="updateSystemPasswords()">💾 Save Passwords</button>
+            <p id="passMsg" style="color: green; font-weight: bold; margin-top: 10px; text-align: center;"></p>
+        </div>
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw4QGYfqyPKpATDwqaFI9eArrH82GuqWBV7_q3PUbl1QiqcaD77wLt1HzojcouT--18Eg/exec";
+                const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw4QGYfqyPKpATDwqaFI9eArrH82GuqWBV7_q3PUbl1QiqcaD77wLt1HzojcouT--18Eg/exec";
 
-        const EMP_LIST = { "1111": "Devendra Kumar", "1112": "Rahul Sharma", "1113": "Priya Singh", "1114": "Amit Verma" };
-
-        function showSection(id) {
-            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-            document.querySelectorAll('.nav-tabs button').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            event.target.classList.add('active');
-            if(id === 'liveStatus') loadLiveStatus();
-            if(id === 'leaveRequests') loadLeaves();
-        }
+        let EMP_LIST = {}; // Ab yeh Google Sheet se live aayega
 
         function formatTime(s) {
             if(!s || isNaN(s)) return "00:00:00";
             return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`; 
         }
 
+        // --- 1. TAB RETENTION LOGIC ---
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.nav-tabs button').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(id).classList.add('active');
+            document.getElementById('tab-' + id).classList.add('active');
+            
+            localStorage.setItem('adminActiveTab', id); // Tab save kar liya
+            
+            if(id === 'liveStatus') loadLiveStatus();
+            if(id === 'leaveRequests') loadLeaves();
+            if(id === 'manageEmp') fetchEmployees(); // Form wale tab me list refresh hogi
+        }
+
+        // --- 2. MASTER INITIALIZATION ---
+        window.onload = async () => { 
+            await fetchEmployees(); // Pehle sheet se saare employee layega
+            
+            let savedTab = localStorage.getItem('adminActiveTab') || 'liveStatus';
+            showSection(savedTab); // Wahi tab kholega jo aakhiri baar khula tha
+            
+            setInterval(loadLiveStatus, 10000); // 10 second me background refresh
+        }; 
+
+        // --- 3. FETCH EMPLOYEES FROM SHEET ---
+        async function fetchEmployees() {
+            try {
+                let res = await fetch(`${SCRIPT_URL}?action=getEmployees&nocache=${Date.now()}`);
+                EMP_LIST = await res.json();
+                
+                let tbody = document.getElementById("empTableBody");
+                if(!tbody) return;
+                tbody.innerHTML = "";
+                
+                if(Object.keys(EMP_LIST).length === 0) {
+                    return tbody.innerHTML = `<tr><td colspan="6">No employees found. Register one!</td></tr>`;
+                }
+
+                for(let id in EMP_LIST) {
+                    let emp = EMP_LIST[id];
+                    let actionBtn = emp.status === "Active" 
+                        ? `<button class="btn-force" style="background:#f44336;" onclick="deactivateEmp('${id}')">Deactivate</button>`
+                        : `<span style="color:red; font-weight:bold;">Inactive</span>`;
+                        
+                    tbody.innerHTML += `<tr>
+                        <td style="font-weight:bold;">${id}</td>
+                        <td>${emp.name}</td>
+                        <td>${emp.mobile}</td>
+                        <td>${emp.joinDate}</td>
+                        <td style="color:${emp.status==='Active'?'green':'red'}; font-weight:bold;">${emp.status}</td>
+                        <td>${actionBtn}</td>
+                    </tr>`;
+                }
+            } catch(e) { console.log("Failed to fetch employees."); }
+        }
+
+        // --- 4. REGISTER NEW EMPLOYEE ---
+        async function registerEmployee() {
+            let name = document.getElementById('regName').value.trim();
+            let mobile = document.getElementById('regMobile').value.trim();
+            let aadhar = document.getElementById('regAadhar').value.trim();
+            let joinDate = document.getElementById('regJoinDate').value;
+
+            if(!name || !mobile || !aadhar || !joinDate) return alert("Please fill all details!");
+            if(mobile.length < 10 || aadhar.length < 12) return alert("Enter valid Mobile and Aadhar number!");
+
+            document.getElementById('empTableBody').innerHTML = `<tr><td colspan="6">Registering... Please wait!</td></tr>`;
+            
+            try {
+                let res = await fetch(SCRIPT_URL, { 
+                    method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ action: "addEmployee", name: name, mobile: mobile, aadhar: aadhar, joinDate: joinDate }) 
+                });
+                let data = await res.json();
+                
+                alert(`✅ Registration Successful!\nNew Employee ID is: ${data.newId}`);
+                
+                // Clear fields
+                document.getElementById('regName').value = ""; document.getElementById('regMobile').value = "";
+                document.getElementById('regAadhar').value = ""; document.getElementById('regJoinDate').value = "";
+                
+                fetchEmployees(); // Table refresh
+            } catch(e) { alert("Registration failed. Check connection."); }
+        }
+
+        // --- 5. DEACTIVATE EMPLOYEE ---
+        async function deactivateEmp(id) {
+            if(!confirm(`Are you sure you want to Deactivate Employee ID: ${id}?\nThey will not be able to punch in anymore.`)) return;
+            
+            await fetch(SCRIPT_URL, { 
+                method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: "deactivateEmployee", id: id }) 
+            });
+            alert("Employee Deactivated!");
+            fetchEmployees();
+        }
+
+        // --- 6. LIVE STATUS & FORCE ACTION ---
         async function loadLiveStatus() {
             let today = new Date();
             let dd = String(today.getDate()).padStart(2, '0'); let mm = String(today.getMonth() + 1).padStart(2, '0'); let yyyy = today.getFullYear();
@@ -127,23 +265,56 @@
                 let res = await fetch(`${SCRIPT_URL}?action=getLiveStatus&date=${dateStr}&nocache=${Date.now()}`);
                 let data = await res.json();
                 let tbody = document.getElementById("liveTableBody");
+                if(!tbody) return;
                 tbody.innerHTML = "";
                 
+                // Sirf unko dikhao jo Active hain
                 for(let id in EMP_LIST) {
+                    if(EMP_LIST[id].status !== "Active") continue;
+
                     let status = data[id] ? data[id].status : "out";
                     let displayStatus, dotClass;
+                    let actionBtn = "-";
                     
-                    if (status === "in" || status === "work") { displayStatus = "Punched In (Working)"; dotClass = "dot-green"; }
-                    else if (status === "break") { displayStatus = "☕ On Break"; dotClass = "dot-orange"; }
-                    else if (status === "train") { displayStatus = "💼 In Training"; dotClass = "dot-purple"; }
-                    else if (status === "leave") { displayStatus = "📅 On Leave / Off"; dotClass = "dot-red"; }
-                    else { displayStatus = "Not Punched In / Out"; dotClass = "dot-red"; }
+                    if (status === "in" || status === "work") { 
+                        displayStatus = "Punched In (Working)"; dotClass = "dot-green"; 
+                    }
+                    else if (status === "break") { 
+                        displayStatus = "☕ On Break"; dotClass = "dot-orange"; 
+                    }
+                    else if (status === "train") { 
+                        displayStatus = "💼 In Training"; dotClass = "dot-purple"; 
+                        // Admin can force stop training
+                        actionBtn = `<button class="btn-force" onclick="forceCommand('${id}', 'endTrain')">Stop Training</button>`;
+                    }
+                    else if (status === "leave") { 
+                        displayStatus = "📅 On Leave / Off"; dotClass = "dot-red"; 
+                    }
+                    else { 
+                        displayStatus = "Not Punched In / Out"; dotClass = "dot-red"; 
+                    }
                     
-                    tbody.innerHTML += `<tr><td>${id}</td><td>${EMP_LIST[id]}</td><td><span class="dot ${dotClass}"></span> ${displayStatus}</td></tr>`;
+                    tbody.innerHTML += `<tr>
+                        <td>${id}</td>
+                        <td>${EMP_LIST[id].name}</td>
+                        <td><span class="dot ${dotClass}"></span> ${displayStatus}</td>
+                        <td>${actionBtn}</td>
+                    </tr>`;
                 }
-            } catch(e) { console.log("Live status fetch error"); }
+            } catch(e) { console.log("Live status background fetch error."); }
         }
 
+        async function forceCommand(id, type) {
+            if(!confirm("Are you sure you want to stop their training remotely?")) return;
+            await fetch(SCRIPT_URL, { 
+                method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: "forceAction", id: id, forceType: type }) 
+            });
+            alert("Command Sent! Employee device will update shortly.");
+            loadLiveStatus();
+        }
+
+        // --- 7. LEAVE REQUESTS ---
         async function loadLeaves() {
             try {
                 let res = await fetch(`${SCRIPT_URL}?action=getPendingLeaves&nocache=${Date.now()}`);
@@ -152,11 +323,9 @@
                 tbody.innerHTML = "";
                 if(data.length === 0) return tbody.innerHTML = `<tr><td colspan="7">No leave requests</td></tr>`;
                 
-                // Reversed array taaki latest upar dikhe
                 data.reverse().forEach(req => {
                     let actionHtml = "";
                     if (req.status === "Pending") {
-                        // FIX: Ab ID aur Date nahi, balki Unique ReqId (req.reqId) se pass kar rahe hain
                         actionHtml = `<button class="btn-approve" onclick="updateLeave('${req.reqId}', 'Approved')">Approve</button> 
                                       <button class="btn-reject" onclick="updateLeave('${req.reqId}', 'Rejected')">Reject</button>`;
                     } else if (req.status === "Approved") {
@@ -165,7 +334,6 @@
                         actionHtml = `<span style="color: red; font-weight: bold;">❌ Rejected</span>`;
                     }
 
-                    // Leave Date (req.leaveDate) alag se show hogi
                     tbody.innerHTML += `<tr>
                         <td style="font-size: 12px; color: gray;">${req.date}</td>
                         <td style="font-weight:bold; color:#1a237e;">${req.leaveDate}</td>
@@ -177,20 +345,18 @@
         }
 
         async function updateLeave(reqId, status) {
-            if(!reqId) return alert("System Error: Request ID missing.");
-            if(!confirm(`Are you sure you want to Mark this leave as ${status}?`)) return;
+            if(!reqId) return alert("Error: Request ID missing.");
+            if(!confirm(`Mark this leave as ${status}?`)) return;
             
             await fetch(SCRIPT_URL, { 
-                method: "POST", 
-                headers: { "Content-Type": "text/plain;charset=utf-8" }, 
-                // FIX: backend (V5) ke hisab se reqId pass kiya gaya
+                method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, 
                 body: JSON.stringify({ action: "updateLeave", reqId: reqId, newStatus: status }) 
             });
-            
             alert(`Leave ${status} successfully!`); 
             loadLeaves(); 
         }
 
+        // --- 8. SEARCH & COLOR CODED PDF ---
         async function searchEmployee() {
             let id = document.getElementById("searchId").value;
             if(!id) return alert("Please enter Employee ID!");
@@ -202,29 +368,45 @@
                 let rawDataArray = await res.json();
                 
                 tbody.innerHTML = "";
-                if(rawDataArray.length === 0) return tbody.innerHTML = `<tr><td colspan="9">No records found for this ID. Data hasn't synced yet.</td></tr>`;
+                if(rawDataArray.length === 0) return tbody.innerHTML = `<tr><td colspan="9">No records found.</td></tr>`;
                 
-                document.getElementById("pdfTitle").innerText = `Attendance Report - ID: ${id} (${EMP_LIST[id] || "Unknown"})`;
+                let empName = EMP_LIST[id] ? EMP_LIST[id].name : "Unknown";
+                document.getElementById("pdfTitle").innerText = `Attendance Report - ID: ${id} (${empName})`;
                 
                 rawDataArray.forEach(jsonStr => {
                     try {
                         let emp = JSON.parse(jsonStr);
-                        if (!emp) return; // safeguard
+                        if (!emp) return;
                         let totalWorkSecs = (emp.workSecs || 0) + (emp.trainSecs || 0);
-                        let bTime = formatTime(emp.breakSecs);
-                        let tTime = formatTime(emp.trainSecs);
-                        let wTime = formatTime(totalWorkSecs);
                         
-                        let statusText = emp.statusText || "Present";
-                        if(emp.mode === 'break') statusText = "☕ On Break";
-                        else if(emp.mode === 'train') statusText = "💼 Training";
-                        
+                        // Color Coding Logic (Similar to Employee App)
+                        let wColor = "red"; 
+                        if (totalWorkSecs >= 28800) wColor = "green"; // 8+ Hrs
+                        else if (totalWorkSecs > 14400) wColor = "orange"; // 4-8 Hrs
+
+                        let statusHtml = emp.statusText || "Present";
+                        let isLeaveOrOff = ["leave", "off", "holiday", "el", "cl", "sl", "lwp"].some(v => statusHtml.toLowerCase().includes(v));
+
+                        if (!isLeaveOrOff && emp.mode !== "leave") {
+                            if (emp.isPunchedOut && totalWorkSecs <= 14400 && totalWorkSecs > 0) {
+                                statusHtml = `<span style="color:red; font-weight:bold;">Half Day</span>`;
+                            } else {
+                                statusHtml = `<span style="color:green; font-weight:bold;">Present</span>`;
+                            }
+                        } else {
+                            statusHtml = `<span style="color:red; font-weight:bold;">${statusHtml}</span>`;
+                            if(totalWorkSecs === 0) wColor = "black";
+                        }
+
+                        let bColor = (emp.breakSecs > 3600) ? "red" : "black";
                         let dateToPrint = emp.recordDate || emp.date || "-";
 
                         tbody.innerHTML += `<tr>
-                            <td>${dateToPrint}</td><td>${emp.id}</td><td>${emp.name}</td><td>${statusText}</td>
-                            <td>${emp.inTime}</td><td>${emp.outTime}</td><td>${bTime}</td><td>${tTime}</td>
-                            <td style="font-weight:bold; color:${totalWorkSecs >= 28800 ? 'green' : 'red'};">${wTime}</td>
+                            <td>${dateToPrint}</td><td>${emp.id}</td><td>${emp.name}</td><td>${statusHtml}</td>
+                            <td>${emp.inTime}</td><td>${emp.outTime}</td>
+                            <td style="color:${bColor}; font-weight:${emp.breakSecs>3600?'bold':'normal'};">${formatTime(emp.breakSecs)}</td>
+                            <td>${formatTime(emp.trainSecs)}</td>
+                            <td style="font-weight:bold; color:${wColor};">${formatTime(totalWorkSecs)}</td>
                         </tr>`;
                     } catch(e) { console.log("Row parsing error"); }
                 });
@@ -236,15 +418,13 @@
         function downloadEmpPDF() {
             let element = document.getElementById('pdfArea'); 
             let title = document.getElementById('pdfTitle');
-            title.style.display = 'block';
-            
-            // FIX: Blank PDF aane ka kaaran 'overflow' hota hai, isliye ise fix kiya
             let wrapper = document.getElementById('pdfTableWrapper');
-            wrapper.style.overflow = 'visible';
+            
+            title.style.display = 'block';
+            wrapper.style.overflow = 'visible'; // To prevent cut-off
             
             let opt = { 
-                margin: 0.3, 
-                filename: `Report_Emp_${document.getElementById("searchId").value}.pdf`, 
+                margin: 0.3, filename: `Report_Emp_${document.getElementById("searchId").value}.pdf`, 
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true, scrollY: 0 }, 
                 jsPDF: { unit: 'in', format: 'landscape', orientation: 'landscape' } 
@@ -252,28 +432,28 @@
             
             html2pdf().set(opt).from(element).save().then(() => { 
                 title.style.display = 'none'; 
-                wrapper.style.overflow = 'auto'; // Export hone ke baad wapas normal kar diya
+                wrapper.style.overflow = 'auto'; // Revert back
             });
         }
 
-        async function changePassword() {
-            let newPass = document.getElementById("newPassword").value;
-            if(!newPass) return alert("Enter a valid password!");
+        // --- 9. UPDATE PASSWORDS ---
+        async function updateSystemPasswords() {
+            let aPass = document.getElementById("newAdminPass").value;
+            let tPass = document.getElementById("newTrainPass").value;
             
+            if(!aPass && !tPass) return alert("Enter at least one password to update!");
+            
+            document.getElementById("passMsg").innerText = "Updating... Please wait.";
             await fetch(SCRIPT_URL, { 
-                method: "POST", 
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ action: "updatePassword", newPass: newPass }) 
+                method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: "updatePasswords", adminPass: aPass, trainPass: tPass }) 
             });
             
-            document.getElementById("passMsg").innerText = "✅ Password updated successfully!";
+            document.getElementById("passMsg").innerText = "✅ Passwords updated successfully!";
             setTimeout(() => document.getElementById("passMsg").innerText = "", 3000);
+            document.getElementById("newAdminPass").value = "";
+            document.getElementById("newTrainPass").value = "";
         }
-
-        window.onload = () => { 
-            loadLiveStatus(); 
-            setInterval(loadLiveStatus, 5000); 
-        }; 
     </script>
 </body>
 </html>
