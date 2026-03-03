@@ -21,6 +21,8 @@
         .dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; }
         .dot-green { background-color: #4CAF50; }
         .dot-red { background-color: #f44336; }
+        .dot-orange { background-color: #FF9800; }
+        .dot-purple { background-color: #9C27B0; }
         input[type="text"], input[type="password"] { padding: 10px; width: 60%; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; }
         .btn-primary { background: #1a237e; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
     </style>
@@ -39,8 +41,7 @@
     </div>
 
     <div id="liveStatus" class="section active">
-        <h3>Live Employee Status (Today)</h3>
-        <button class="btn-primary" onclick="loadLiveStatus()">Refresh Status</button>
+        <h3>Live Employee Status <span style="font-size:12px; color:gray;">(Auto-refreshing)</span></h3>
         <table>
             <thead><tr><th>Employee ID</th><th>Name</th><th>Current Status</th></tr></thead>
             <tbody id="liveTableBody"><tr><td colspan="3">Loading...</td></tr></tbody>
@@ -52,7 +53,7 @@
         <button class="btn-primary" onclick="loadLeaves()">Refresh Leaves</button>
         <table>
             <thead><tr><th>Date</th><th>ID</th><th>Name</th><th>Type</th><th>Reason</th><th>Action</th></tr></thead>
-            <tbody id="leaveTableBody"><tr><td colspan="6">No pending requests</td></tr></tbody>
+            <tbody id="leaveTableBody"><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
     </div>
 
@@ -73,7 +74,6 @@
 
     <div id="settings" class="section">
         <h3>Change Admin Password</h3>
-        <p>यह पासवर्ड एम्प्लॉई पैनल में PDF डाउनलोड और ट्रेनिंग शुरू करने के काम आएगा।</p>
         <input type="password" id="newPassword" placeholder="Enter New Password">
         <button class="btn-primary" onclick="changePassword()">Update Password</button>
         <p id="passMsg" style="color: green; font-weight: bold;"></p>
@@ -92,26 +92,30 @@
         }
 
         async function loadLiveStatus() {
-            let today = new Date().toLocaleDateString('hi-IN'); // Format: DD/MM/YYYY
-            let res = await fetch(`${SCRIPT_URL}?action=getLiveStatus&date=${today}`);
-            let data = await res.json();
-            let tbody = document.getElementById("liveTableBody");
-            tbody.innerHTML = "";
+            let today = new Date();
+            let dd = String(today.getDate()).padStart(2, '0'); let mm = String(today.getMonth() + 1).padStart(2, '0'); let yyyy = today.getFullYear();
+            let dateStr = `${dd}/${mm}/${yyyy}`; 
             
-            // Temporary Master List for Admin (Sync this with your employee list)
-            const EMP_LIST = { "1111": "Devendra Kumar", "1112": "Rahul Sharma", "1113": "Priya Singh", "1114": "Amit Verma" };
-            
-            for(let id in EMP_LIST) {
-                let status = data[id] ? data[id].status : "Not Punched In";
-                let dotClass = (status === "in" || status === "work" || status === "train") ? "dot-green" : "dot-red";
-                let displayStatus = status === "in" ? "Punched In" : status === "out" ? "Punched Out" : status;
+            try {
+                let res = await fetch(`${SCRIPT_URL}?action=getLiveStatus&date=${dateStr}`);
+                let data = await res.json();
+                let tbody = document.getElementById("liveTableBody");
+                tbody.innerHTML = "";
                 
-                tbody.innerHTML += `<tr>
-                    <td>${id}</td>
-                    <td>${EMP_LIST[id]}</td>
-                    <td><span class="dot ${dotClass}"></span> ${displayStatus}</td>
-                </tr>`;
-            }
+                const EMP_LIST = { "1111": "Devendra Kumar", "1112": "Rahul Sharma", "1113": "Priya Singh", "1114": "Amit Verma" };
+                
+                for(let id in EMP_LIST) {
+                    let status = data[id] ? data[id].status : "out";
+                    let displayStatus, dotClass;
+                    
+                    if (status === "in" || status === "work") { displayStatus = "Punched In (Working)"; dotClass = "dot-green"; }
+                    else if (status === "break") { displayStatus = "☕ On Break"; dotClass = "dot-orange"; }
+                    else if (status === "train") { displayStatus = "💼 In Training"; dotClass = "dot-purple"; }
+                    else { displayStatus = "Not Punched In / Out"; dotClass = "dot-red"; }
+                    
+                    tbody.innerHTML += `<tr><td>${id}</td><td>${EMP_LIST[id]}</td><td><span class="dot ${dotClass}"></span> ${displayStatus}</td></tr>`;
+                }
+            } catch(e) { console.log("Refresh error"); }
         }
 
         async function loadLeaves() {
@@ -124,59 +128,40 @@
             data.forEach(req => {
                 tbody.innerHTML += `<tr>
                     <td>${req.date}</td><td>${req.id}</td><td>${req.name}</td><td>${req.type}</td><td>${req.reason}</td>
-                    <td>
-                        <button class="btn-approve" onclick="updateLeave('${req.date}', '${req.id}', 'Approved')">Approve</button>
-                        <button class="btn-reject" onclick="updateLeave('${req.date}', '${req.id}', 'Rejected')">Reject</button>
-                    </td>
+                    <td><button class="btn-approve" onclick="updateLeave('${req.date}', '${req.id}', 'Approved')">Approve</button> <button class="btn-reject" onclick="updateLeave('${req.date}', '${req.id}', 'Rejected')">Reject</button></td>
                 </tr>`;
             });
         }
 
         async function updateLeave(date, id, status) {
-            if(!confirm(`Are you sure you want to ${status} this leave?`)) return;
-            await fetch(SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "updateLeave", date: date, id: id, newStatus: status })
-            });
-            alert(`Leave ${status} successfully!`);
-            loadLeaves();
+            await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "updateLeave", date: date, id: id, newStatus: status }) });
+            alert(`Leave ${status}!`); loadLeaves();
         }
 
         async function searchEmployee() {
             let id = document.getElementById("searchId").value;
             if(!id) return alert("Enter ID!");
-            document.getElementById("searchTableBody").innerHTML = `<tr><td colspan="3">Searching...</td></tr>`;
+            document.getElementById("searchTableBody").innerHTML = `<tr><td colspan="3">Searching database...</td></tr>`;
+            
             let res = await fetch(`${SCRIPT_URL}?action=getEmpData&id=${id}`);
             let data = await res.json();
             let tbody = document.getElementById("searchTableBody");
             tbody.innerHTML = "";
-            if(data.length === 0) return tbody.innerHTML = `<tr><td colspan="3">No records found for this ID.</td></tr>`;
+            if(data.length === 0) return tbody.innerHTML = `<tr><td colspan="3">No records found. Data hasn't synced yet.</td></tr>`;
             
             document.getElementById("pdfTitle").innerText = `Attendance Report - ID: ${id}`;
             data.forEach(log => {
-                tbody.innerHTML += `<tr><td>${log.date}</td><td>${log.time}</td><td>${log.action}</td></tr>`;
+                let actionText = log.action === 'in' ? 'Punched In' : log.action === 'out' ? 'Punched Out' : log.action === 'break' ? 'Started Break' : log.action === 'work' ? 'Resumed Work' : log.action === 'train' ? 'Training' : log.action;
+                tbody.innerHTML += `<tr><td>${log.date}</td><td>${log.time}</td><td>${actionText}</td></tr>`;
             });
         }
 
         function downloadEmpPDF() {
-            let element = document.getElementById('pdfArea');
-            document.getElementById('pdfTitle').style.display = 'block';
-            let opt = { margin: 0.5, filename: `Employee_${document.getElementById("searchId").value}_Report.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
-            html2pdf().set(opt).from(element).save().then(() => { document.getElementById('pdfTitle').style.display = 'none'; });
+            let element = document.getElementById('pdfArea'); document.getElementById('pdfTitle').style.display = 'block';
+            html2pdf().set({ margin: 0.5, filename: `Employee_${document.getElementById("searchId").value}.pdf` }).from(element).save().then(() => { document.getElementById('pdfTitle').style.display = 'none'; });
         }
 
-        async function changePassword() {
-            let newPass = document.getElementById("newPassword").value;
-            if(!newPass) return alert("Enter a valid password!");
-            await fetch(SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "updatePassword", newPass: newPass })
-            });
-            document.getElementById("passMsg").innerText = "Password updated successfully in Database!";
-            setTimeout(() => document.getElementById("passMsg").innerText = "", 3000);
-        }
-
-        window.onload = loadLiveStatus;
+        window.onload = () => { loadLiveStatus(); setInterval(loadLiveStatus, 5000); }; // Auto Refresh every 5 seconds
     </script>
 </body>
 </html>
