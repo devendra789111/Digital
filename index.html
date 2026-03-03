@@ -98,7 +98,15 @@
 
     <div id="leaveRequests" class="section">
         <h3>Employee Leave Requests</h3>
-        <button class="btn-primary" onclick="loadLeaves()">🔄 Refresh Leaves</button>
+        
+        <div style="margin-bottom: 15px; background: #e3f2fd; padding: 10px; border-radius: 8px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+            <button class="btn-primary" style="background:#FF9800; color:white;" onclick="loadLeaves('Pending')">⏳ Pending</button>
+            <button class="btn-primary" style="background:#4CAF50; color:white;" onclick="loadLeaves('Approved')">✅ Approved Leaves</button>
+            <button class="btn-primary" style="background:#f44336; color:white;" onclick="loadLeaves('Rejected')">❌ Rejected</button>
+        </div>
+        
+        <h4 id="leaveTableTitle" style="color: #1a237e; border-bottom: 2px solid #ccc; padding-bottom: 5px; text-align: left;">Showing: Pending Requests</h4>
+        
         <div class="table-responsive">
             <table>
                 <thead><tr><th>Applied On</th><th>Leave Date</th><th>ID</th><th>Name</th><th>Type</th><th>Reason</th><th>Action / Status</th></tr></thead>
@@ -150,7 +158,7 @@
     <script>
                 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw4QGYfqyPKpATDwqaFI9eArrH82GuqWBV7_q3PUbl1QiqcaD77wLt1HzojcouT--18Eg/exec";
 
-        let EMP_LIST = {}; // Ab yeh Google Sheet se live aayega
+        let EMP_LIST = {}; 
 
         function formatTime(s) {
             if(!s || isNaN(s)) return "00:00:00";
@@ -165,24 +173,21 @@
             document.getElementById(id).classList.add('active');
             document.getElementById('tab-' + id).classList.add('active');
             
-            localStorage.setItem('adminActiveTab', id); // Tab save kar liya
+            localStorage.setItem('adminActiveTab', id); 
             
             if(id === 'liveStatus') loadLiveStatus();
-            if(id === 'leaveRequests') loadLeaves();
-            if(id === 'manageEmp') fetchEmployees(); // Form wale tab me list refresh hogi
+            if(id === 'leaveRequests') loadLeaves('Pending'); // डिफ़ॉल्ट रूप से Pending दिखाएगा
+            if(id === 'manageEmp') fetchEmployees(); 
         }
 
-        // --- 2. MASTER INITIALIZATION ---
         window.onload = async () => { 
-            await fetchEmployees(); // Pehle sheet se saare employee layega
-            
+            await fetchEmployees(); 
             let savedTab = localStorage.getItem('adminActiveTab') || 'liveStatus';
-            showSection(savedTab); // Wahi tab kholega jo aakhiri baar khula tha
-            
-            setInterval(loadLiveStatus, 10000); // 10 second me background refresh
+            showSection(savedTab); 
+            setInterval(loadLiveStatus, 10000); 
         }; 
 
-        // --- 3. FETCH EMPLOYEES FROM SHEET ---
+        // --- 2. FETCH EMPLOYEES (HIDE INACTIVE) ---
         async function fetchEmployees() {
             try {
                 let res = await fetch(`${SCRIPT_URL}?action=getEmployees&nocache=${Date.now()}`);
@@ -192,29 +197,34 @@
                 if(!tbody) return;
                 tbody.innerHTML = "";
                 
-                if(Object.keys(EMP_LIST).length === 0) {
-                    return tbody.innerHTML = `<tr><td colspan="6">No employees found. Register one!</td></tr>`;
-                }
-
+                let hasActive = false;
+                
                 for(let id in EMP_LIST) {
                     let emp = EMP_LIST[id];
-                    let actionBtn = emp.status === "Active" 
-                        ? `<button class="btn-force" style="background:#f44336;" onclick="deactivateEmp('${id}')">Deactivate</button>`
-                        : `<span style="color:red; font-weight:bold;">Inactive</span>`;
+                    
+                    // सिर्फ 'Active' एम्प्लॉई को ही टेबल में दिखाएगा
+                    if(emp.status !== "Active") continue; 
+                    
+                    hasActive = true;
+                    let actionBtn = `<button class="btn-force" style="background:#f44336;" onclick="deactivateEmp('${id}')">Deactivate</button>`;
                         
                     tbody.innerHTML += `<tr>
                         <td style="font-weight:bold;">${id}</td>
                         <td>${emp.name}</td>
                         <td>${emp.mobile}</td>
                         <td>${emp.joinDate}</td>
-                        <td style="color:${emp.status==='Active'?'green':'red'}; font-weight:bold;">${emp.status}</td>
+                        <td style="color:green; font-weight:bold;">${emp.status}</td>
                         <td>${actionBtn}</td>
                     </tr>`;
+                }
+                
+                if(!hasActive) {
+                    tbody.innerHTML = `<tr><td colspan="6">No active employees found.</td></tr>`;
                 }
             } catch(e) { console.log("Failed to fetch employees."); }
         }
 
-        // --- 4. REGISTER NEW EMPLOYEE ---
+        // --- 3. REGISTER & DEACTIVATE ---
         async function registerEmployee() {
             let name = document.getElementById('regName').value.trim();
             let mobile = document.getElementById('regMobile').value.trim();
@@ -232,30 +242,26 @@
                     body: JSON.stringify({ action: "addEmployee", name: name, mobile: mobile, aadhar: aadhar, joinDate: joinDate }) 
                 });
                 let data = await res.json();
-                
                 alert(`✅ Registration Successful!\nNew Employee ID is: ${data.newId}`);
                 
-                // Clear fields
                 document.getElementById('regName').value = ""; document.getElementById('regMobile').value = "";
                 document.getElementById('regAadhar').value = ""; document.getElementById('regJoinDate').value = "";
-                
-                fetchEmployees(); // Table refresh
+                fetchEmployees(); 
             } catch(e) { alert("Registration failed. Check connection."); }
         }
 
-        // --- 5. DEACTIVATE EMPLOYEE ---
         async function deactivateEmp(id) {
-            if(!confirm(`Are you sure you want to Deactivate Employee ID: ${id}?\nThey will not be able to punch in anymore.`)) return;
+            if(!confirm(`Are you sure you want to Deactivate Employee ID: ${id}?\nThey will be hidden from this list and cannot punch in.`)) return;
             
             await fetch(SCRIPT_URL, { 
                 method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify({ action: "deactivateEmployee", id: id }) 
             });
-            alert("Employee Deactivated!");
+            alert("Employee Deactivated & Removed from Active List!");
             fetchEmployees();
         }
 
-        // --- 6. LIVE STATUS & FORCE ACTION ---
+        // --- 4. LIVE STATUS & FORCE ACTION ---
         async function loadLiveStatus() {
             let today = new Date();
             let dd = String(today.getDate()).padStart(2, '0'); let mm = String(today.getMonth() + 1).padStart(2, '0'); let yyyy = today.getFullYear();
@@ -268,39 +274,31 @@
                 if(!tbody) return;
                 tbody.innerHTML = "";
                 
-                // Sirf unko dikhao jo Active hain
+                let activeCount = 0;
                 for(let id in EMP_LIST) {
                     if(EMP_LIST[id].status !== "Active") continue;
+                    activeCount++;
 
                     let status = data[id] ? data[id].status : "out";
                     let displayStatus, dotClass;
                     let actionBtn = "-";
                     
-                    if (status === "in" || status === "work") { 
-                        displayStatus = "Punched In (Working)"; dotClass = "dot-green"; 
-                    }
-                    else if (status === "break") { 
-                        displayStatus = "☕ On Break"; dotClass = "dot-orange"; 
-                    }
+                    if (status === "in" || status === "work") { displayStatus = "Punched In (Working)"; dotClass = "dot-green"; }
+                    else if (status === "break") { displayStatus = "☕ On Break"; dotClass = "dot-orange"; }
                     else if (status === "train") { 
                         displayStatus = "💼 In Training"; dotClass = "dot-purple"; 
-                        // Admin can force stop training
                         actionBtn = `<button class="btn-force" onclick="forceCommand('${id}', 'endTrain')">Stop Training</button>`;
                     }
-                    else if (status === "leave") { 
-                        displayStatus = "📅 On Leave / Off"; dotClass = "dot-red"; 
-                    }
-                    else { 
-                        displayStatus = "Not Punched In / Out"; dotClass = "dot-red"; 
-                    }
+                    else if (status === "leave") { displayStatus = "📅 On Leave / Off"; dotClass = "dot-red"; }
+                    else { displayStatus = "Not Punched In / Out"; dotClass = "dot-red"; }
                     
                     tbody.innerHTML += `<tr>
-                        <td>${id}</td>
-                        <td>${EMP_LIST[id].name}</td>
+                        <td>${id}</td><td>${EMP_LIST[id].name}</td>
                         <td><span class="dot ${dotClass}"></span> ${displayStatus}</td>
                         <td>${actionBtn}</td>
                     </tr>`;
                 }
+                if(activeCount === 0) tbody.innerHTML = `<tr><td colspan="4">No active employees to show.</td></tr>`;
             } catch(e) { console.log("Live status background fetch error."); }
         }
 
@@ -314,16 +312,21 @@
             loadLiveStatus();
         }
 
-        // --- 7. LEAVE REQUESTS ---
-        async function loadLeaves() {
+        // --- 5. LEAVE REQUESTS (WITH FILTERS) ---
+        async function loadLeaves(filterStatus = 'Pending') {
+            document.getElementById('leaveTableTitle').innerText = `Showing: ${filterStatus} Requests`;
             try {
                 let res = await fetch(`${SCRIPT_URL}?action=getPendingLeaves&nocache=${Date.now()}`);
                 let data = await res.json();
                 let tbody = document.getElementById("leaveTableBody");
                 tbody.innerHTML = "";
-                if(data.length === 0) return tbody.innerHTML = `<tr><td colspan="7">No leave requests</td></tr>`;
                 
-                data.reverse().forEach(req => {
+                // सिर्फ वही लीव दिखाएगा जो बटन से सेलेक्ट की गई है
+                let filteredData = data.filter(req => req.status === filterStatus);
+                
+                if(filteredData.length === 0) return tbody.innerHTML = `<tr><td colspan="7">No ${filterStatus} leaves found.</td></tr>`;
+                
+                filteredData.reverse().forEach(req => {
                     let actionHtml = "";
                     if (req.status === "Pending") {
                         actionHtml = `<button class="btn-approve" onclick="updateLeave('${req.reqId}', 'Approved')">Approve</button> 
@@ -353,10 +356,10 @@
                 body: JSON.stringify({ action: "updateLeave", reqId: reqId, newStatus: status }) 
             });
             alert(`Leave ${status} successfully!`); 
-            loadLeaves(); 
+            loadLeaves('Pending'); // अपडेट होने के बाद वापस Pending लिस्ट दिखाएगा
         }
 
-        // --- 8. SEARCH & COLOR CODED PDF ---
+        // --- 6. SEARCH & COLOR CODED PDF ---
         async function searchEmployee() {
             let id = document.getElementById("searchId").value;
             if(!id) return alert("Please enter Employee ID!");
@@ -379,10 +382,9 @@
                         if (!emp) return;
                         let totalWorkSecs = (emp.workSecs || 0) + (emp.trainSecs || 0);
                         
-                        // Color Coding Logic (Similar to Employee App)
                         let wColor = "red"; 
-                        if (totalWorkSecs >= 28800) wColor = "green"; // 8+ Hrs
-                        else if (totalWorkSecs > 14400) wColor = "orange"; // 4-8 Hrs
+                        if (totalWorkSecs >= 28800) wColor = "green"; 
+                        else if (totalWorkSecs > 14400) wColor = "orange"; 
 
                         let statusHtml = emp.statusText || "Present";
                         let isLeaveOrOff = ["leave", "off", "holiday", "el", "cl", "sl", "lwp"].some(v => statusHtml.toLowerCase().includes(v));
@@ -421,7 +423,7 @@
             let wrapper = document.getElementById('pdfTableWrapper');
             
             title.style.display = 'block';
-            wrapper.style.overflow = 'visible'; // To prevent cut-off
+            wrapper.style.overflow = 'visible'; 
             
             let opt = { 
                 margin: 0.3, filename: `Report_Emp_${document.getElementById("searchId").value}.pdf`, 
@@ -432,11 +434,11 @@
             
             html2pdf().set(opt).from(element).save().then(() => { 
                 title.style.display = 'none'; 
-                wrapper.style.overflow = 'auto'; // Revert back
+                wrapper.style.overflow = 'auto'; 
             });
         }
 
-        // --- 9. UPDATE PASSWORDS ---
+        // --- 7. UPDATE PASSWORDS ---
         async function updateSystemPasswords() {
             let aPass = document.getElementById("newAdminPass").value;
             let tPass = document.getElementById("newTrainPass").value;
