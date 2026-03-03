@@ -11,20 +11,21 @@
         .nav-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
         .nav-tabs button { padding: 10px 20px; font-size: 16px; border: none; background: #ddd; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .nav-tabs button.active { background: #1a237e; color: white; }
-        .section { display: none; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 900px; margin: auto; }
+        .section { display: none; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 950px; margin: auto; }
         .section.active { display: block; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
         th { background-color: #1a237e; color: white; }
-        .btn-approve { background: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
-        .btn-reject { background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
+        .btn-approve { background: #4CAF50; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-reject { background: #f44336; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; }
         .dot-green { background-color: #4CAF50; }
         .dot-red { background-color: #f44336; }
         .dot-orange { background-color: #FF9800; }
         .dot-purple { background-color: #9C27B0; }
         input[type="text"], input[type="password"] { padding: 10px; width: 60%; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; }
-        .btn-primary { background: #1a237e; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        .btn-primary { background: #1a237e; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        #pdfArea { background: white; padding: 15px; }
     </style>
 </head>
 <body>
@@ -50,7 +51,7 @@
 
     <div id="leaveRequests" class="section">
         <h3>Pending Leave Requests</h3>
-        <button class="btn-primary" onclick="loadLeaves()">Refresh Leaves</button>
+        <button class="btn-primary" onclick="loadLeaves()">🔄 Refresh Leaves</button>
         <table>
             <thead><tr><th>Date</th><th>ID</th><th>Name</th><th>Type</th><th>Reason</th><th>Action</th></tr></thead>
             <tbody id="leaveTableBody"><tr><td colspan="6">Loading...</td></tr></tbody>
@@ -60,14 +61,21 @@
     <div id="searchEmp" class="section">
         <h3>Search Employee Attendance</h3>
         <input type="text" id="searchId" placeholder="Enter Employee ID (e.g. 1111)">
-        <button class="btn-primary" onclick="searchEmployee()">Search</button>
+        <button class="btn-primary" onclick="searchEmployee()">🔍 Search</button>
         <button class="btn-primary" style="background:#D32F2F;" onclick="downloadEmpPDF()">📄 Download PDF</button>
         
         <div id="pdfArea" style="margin-top: 20px;">
-            <h4 id="pdfTitle" style="display:none; text-align:center;">Attendance Report</h4>
+            <h3 id="pdfTitle" style="display:none; text-align:center; color:#1a237e; margin-bottom: 15px;">Attendance Report</h3>
             <table id="empSearchTable">
-                <thead><tr><th>Date</th><th>Time</th><th>Action Logged</th></tr></thead>
-                <tbody id="searchTableBody"><tr><td colspan="3">Search an ID to view logs</td></tr></tbody>
+                <thead>
+                    <tr>
+                        <th>Date</th><th>ID</th><th>Name</th><th>Status</th><th>In Time</th><th>Out Time</th>
+                        <th>Break Time</th><th>Train Time</th><th>Total Hrs</th>
+                    </tr>
+                </thead>
+                <tbody id="searchTableBody">
+                    <tr><td colspan="9">Search an ID to view logs</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
@@ -76,11 +84,13 @@
         <h3>Change Admin Password</h3>
         <input type="password" id="newPassword" placeholder="Enter New Password">
         <button class="btn-primary" onclick="changePassword()">Update Password</button>
-        <p id="passMsg" style="color: green; font-weight: bold;"></p>
+        <p id="passMsg" style="color: green; font-weight: bold; margin-top: 10px;"></p>
     </div>
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw4QGYfqyPKpATDwqaFI9eArrH82GuqWBV7_q3PUbl1QiqcaD77wLt1HzojcouT--18Eg/exec";
+
+        const EMP_LIST = { "1111": "Devendra Kumar", "1112": "Rahul Sharma", "1113": "Priya Singh", "1114": "Amit Verma" };
 
         function showSection(id) {
             document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
@@ -89,6 +99,11 @@
             event.target.classList.add('active');
             if(id === 'liveStatus') loadLiveStatus();
             if(id === 'leaveRequests') loadLeaves();
+        }
+
+        function formatTime(s) {
+            if(!s || isNaN(s)) return "00:00:00";
+            return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`; 
         }
 
         async function loadLiveStatus() {
@@ -102,8 +117,6 @@
                 let tbody = document.getElementById("liveTableBody");
                 tbody.innerHTML = "";
                 
-                const EMP_LIST = { "1111": "Devendra Kumar", "1112": "Rahul Sharma", "1113": "Priya Singh", "1114": "Amit Verma" };
-                
                 for(let id in EMP_LIST) {
                     let status = data[id] ? data[id].status : "out";
                     let displayStatus, dotClass;
@@ -111,57 +124,124 @@
                     if (status === "in" || status === "work") { displayStatus = "Punched In (Working)"; dotClass = "dot-green"; }
                     else if (status === "break") { displayStatus = "☕ On Break"; dotClass = "dot-orange"; }
                     else if (status === "train") { displayStatus = "💼 In Training"; dotClass = "dot-purple"; }
+                    else if (status === "leave") { displayStatus = "📅 On Leave / Off"; dotClass = "dot-red"; }
                     else { displayStatus = "Not Punched In / Out"; dotClass = "dot-red"; }
                     
                     tbody.innerHTML += `<tr><td>${id}</td><td>${EMP_LIST[id]}</td><td><span class="dot ${dotClass}"></span> ${displayStatus}</td></tr>`;
                 }
-            } catch(e) { console.log("Refresh error"); }
+            } catch(e) { console.log("Live status fetch error"); }
         }
 
         async function loadLeaves() {
-            let res = await fetch(`${SCRIPT_URL}?action=getPendingLeaves`);
-            let data = await res.json();
-            let tbody = document.getElementById("leaveTableBody");
-            tbody.innerHTML = "";
-            if(data.length === 0) return tbody.innerHTML = `<tr><td colspan="6">No pending requests</td></tr>`;
-            
-            data.forEach(req => {
-                tbody.innerHTML += `<tr>
-                    <td>${req.date}</td><td>${req.id}</td><td>${req.name}</td><td>${req.type}</td><td>${req.reason}</td>
-                    <td><button class="btn-approve" onclick="updateLeave('${req.date}', '${req.id}', 'Approved')">Approve</button> <button class="btn-reject" onclick="updateLeave('${req.date}', '${req.id}', 'Rejected')">Reject</button></td>
-                </tr>`;
-            });
+            try {
+                let res = await fetch(`${SCRIPT_URL}?action=getPendingLeaves`);
+                let data = await res.json();
+                let tbody = document.getElementById("leaveTableBody");
+                tbody.innerHTML = "";
+                if(data.length === 0) return tbody.innerHTML = `<tr><td colspan="6">No pending requests</td></tr>`;
+                
+                data.forEach(req => {
+                    tbody.innerHTML += `<tr>
+                        <td>${req.date}</td><td>${req.id}</td><td>${req.name}</td><td>${req.type}</td><td>${req.reason}</td>
+                        <td>
+                            <button class="btn-approve" onclick="updateLeave('${req.date}', '${req.id}', 'Approved')">Approve</button> 
+                            <button class="btn-reject" onclick="updateLeave('${req.date}', '${req.id}', 'Rejected')">Reject</button>
+                        </td>
+                    </tr>`;
+                });
+            } catch(e) { console.log("Leave fetch error"); }
         }
 
         async function updateLeave(date, id, status) {
-            await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "updateLeave", date: date, id: id, newStatus: status }) });
-            alert(`Leave ${status}!`); loadLeaves();
+            if(!confirm(`Are you sure you want to ${status} this leave?`)) return;
+            
+            // text/plain prevents CORS issues for POST requests
+            await fetch(SCRIPT_URL, { 
+                method: "POST", 
+                headers: { "Content-Type": "text/plain;charset=utf-8" }, 
+                body: JSON.stringify({ action: "updateLeave", date: date, id: id, newStatus: status }) 
+            });
+            
+            alert(`Leave ${status} successfully! Employee will see this update in their app.`); 
+            loadLeaves();
         }
 
         async function searchEmployee() {
             let id = document.getElementById("searchId").value;
-            if(!id) return alert("Enter ID!");
-            document.getElementById("searchTableBody").innerHTML = `<tr><td colspan="3">Searching database...</td></tr>`;
-            
-            let res = await fetch(`${SCRIPT_URL}?action=getEmpData&id=${id}`);
-            let data = await res.json();
+            if(!id) return alert("Please enter Employee ID!");
             let tbody = document.getElementById("searchTableBody");
-            tbody.innerHTML = "";
-            if(data.length === 0) return tbody.innerHTML = `<tr><td colspan="3">No records found. Data hasn't synced yet.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="9">Fetching exact data from Database...</td></tr>`;
             
-            document.getElementById("pdfTitle").innerText = `Attendance Report - ID: ${id}`;
-            data.forEach(log => {
-                let actionText = log.action === 'in' ? 'Punched In' : log.action === 'out' ? 'Punched Out' : log.action === 'break' ? 'Started Break' : log.action === 'work' ? 'Resumed Work' : log.action === 'train' ? 'Training' : log.action;
-                tbody.innerHTML += `<tr><td>${log.date}</td><td>${log.time}</td><td>${actionText}</td></tr>`;
-            });
+            try {
+                let res = await fetch(`${SCRIPT_URL}?action=getEmpData&id=${id}`);
+                let rawDataArray = await res.json(); // Array of JSON strings
+                
+                tbody.innerHTML = "";
+                if(rawDataArray.length === 0) return tbody.innerHTML = `<tr><td colspan="9">No records found for this ID. Data hasn't synced yet.</td></tr>`;
+                
+                document.getElementById("pdfTitle").innerText = `Attendance Report - ID: ${id} (${EMP_LIST[id] || "Unknown"})`;
+                
+                rawDataArray.forEach(jsonStr => {
+                    try {
+                        let emp = JSON.parse(jsonStr);
+                        let totalWorkSecs = (emp.workSecs || 0) + (emp.trainSecs || 0);
+                        let bTime = formatTime(emp.breakSecs);
+                        let tTime = formatTime(emp.trainSecs);
+                        let wTime = formatTime(totalWorkSecs);
+                        
+                        let statusText = emp.statusText || "Present";
+                        if(emp.mode === 'break') statusText = "☕ On Break";
+                        else if(emp.mode === 'train') statusText = "💼 Training";
+                        
+                        let dateToPrint = emp.recordDate || emp.date || "-"; // compatibility
+
+                        tbody.innerHTML += `<tr>
+                            <td>${dateToPrint}</td><td>${emp.id}</td><td>${emp.name}</td><td>${statusText}</td>
+                            <td>${emp.inTime}</td><td>${emp.outTime}</td><td>${bTime}</td><td>${tTime}</td>
+                            <td style="font-weight:bold; color:${totalWorkSecs >= 28800 ? 'green' : 'red'};">${wTime}</td>
+                        </tr>`;
+                    } catch(e) { console.log("Row parsing error"); }
+                });
+            } catch(e) { 
+                tbody.innerHTML = `<tr><td colspan="9" style="color:red;">Error fetching data. Check connection.</td></tr>`;
+            }
         }
 
         function downloadEmpPDF() {
-            let element = document.getElementById('pdfArea'); document.getElementById('pdfTitle').style.display = 'block';
-            html2pdf().set({ margin: 0.5, filename: `Employee_${document.getElementById("searchId").value}.pdf` }).from(element).save().then(() => { document.getElementById('pdfTitle').style.display = 'none'; });
+            let element = document.getElementById('pdfArea'); 
+            let title = document.getElementById('pdfTitle');
+            title.style.display = 'block';
+            
+            let opt = { 
+                margin: 0.5, 
+                filename: `Report_Emp_${document.getElementById("searchId").value}.pdf`, 
+                html2canvas: { scale: 2 }, 
+                jsPDF: { unit: 'in', format: 'landscape', orientation: 'landscape' } 
+            };
+            
+            html2pdf().set(opt).from(element).save().then(() => { 
+                title.style.display = 'none'; 
+            });
         }
 
-        window.onload = () => { loadLiveStatus(); setInterval(loadLiveStatus, 5000); }; // Auto Refresh every 5 seconds
+        async function changePassword() {
+            let newPass = document.getElementById("newPassword").value;
+            if(!newPass) return alert("Enter a valid password!");
+            
+            await fetch(SCRIPT_URL, { 
+                method: "POST", 
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: "updatePassword", newPass: newPass }) 
+            });
+            
+            document.getElementById("passMsg").innerText = "✅ Password updated successfully!";
+            setTimeout(() => document.getElementById("passMsg").innerText = "", 3000);
+        }
+
+        window.onload = () => { 
+            loadLiveStatus(); 
+            setInterval(loadLiveStatus, 5000); // 5 second auto-refresh
+        }; 
     </script>
 </body>
 </html>
