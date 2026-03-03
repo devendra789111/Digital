@@ -3,367 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HR Dashboard - Quality Education</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>Admin Dashboard - Quality Education</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        :root { 
-            --primary: #4361ee; --secondary: #3f37c9; --success: #2ecc71; 
-            --danger: #e74c3c; --warning: #f39c12; --info: #9b59b6; 
-            --dark: #2b2d42; --light: #f4f7f6; --white: #ffffff;
-        }
-        * { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { margin: 0; background-color: var(--light); color: var(--dark); }
-        
-        /* --- Login Screen --- */
-        #loginScreen { position: fixed; top:0; left:0; width:100%; height:100%; background: linear-gradient(135deg, var(--primary), var(--info)); z-index: 2000; display: flex; justify-content: center; align-items: center;}
-        .login-box { background: var(--white); padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 90%; max-width: 380px; }
-        .login-box h2 { margin-top: 0; color: var(--dark); font-weight: 700; }
-        .login-box input { width: 100%; padding: 15px; margin: 15px 0; border: 2px solid #eee; border-radius: 10px; font-size: 15px; outline: none; transition: 0.3s; }
-        .login-box input:focus { border-color: var(--primary); }
-        .login-box button { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);}
-        .login-box button:hover { background: var(--secondary); transform: translateY(-2px); }
-
-        /* --- Top Navbar --- */
-        .navbar { background: var(--white); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100;}
-        .nav-brand { font-size: 20px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 10px;}
-        .nav-controls { display: flex; gap: 10px; }
-        .btn-icon { background: var(--light); border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--dark); transition: 0.3s;}
-        .btn-icon:hover { background: #e2e8f0; }
-
-        /* --- Main Content & Cards --- */
-        .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 25px; }
-        .stat-card { background: var(--white); padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.03); display: flex; flex-direction: column; border-top: 5px solid; }
-        .stat-card.present { border-color: var(--success); }
-        .stat-card.leave { border-color: var(--warning); }
-        .stat-card.duty { border-color: var(--info); }
-        .stat-card.total { border-color: var(--primary); }
-        .stat-card .title { font-size: 14px; color: #7f8c8d; font-weight: 600; margin-bottom: 5px;}
-        .stat-card .value { font-size: 32px; font-weight: 700; color: var(--dark); }
-
-        /* --- Search & Actions --- */
-        .toolbar { display: flex; justify-content: space-between; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
-        .search-box { flex: 1; min-width: 250px; padding: 12px 20px; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 14px; outline: none; }
-        .search-box:focus { border-color: var(--primary); }
-        .btn-sync { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 10px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 10px rgba(67,97,238,0.2); transition: 0.3s;}
-        .btn-sync:hover { background: var(--secondary); }
-
-        /* --- Responsive Table --- */
-        .table-wrapper { background: var(--white); border-radius: 15px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.03); overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 900px; }
-        th, td { padding: 15px 10px; text-align: left; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
-        th { color: #7f8c8d; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;}
-        tr:hover { background-color: #f8fafc; }
-
-        /* --- Badges & Buttons --- */
-        .badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; text-align: center;}
-        .bg-success { background: #d4edda; color: #155724; }
-        .bg-warning { background: #fff3cd; color: #856404; }
-        .bg-danger { background: #f8d7da; color: #721c24; }
-        .bg-info { background: #e2d9f3; color: #5a32a3; }
-
-        .action-flex { display: flex; gap: 8px; flex-wrap: wrap; }
-        .btn-sm { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; color: white; transition: 0.2s;}
-        .btn-appr { background: var(--success); } .btn-appr:hover { background: #27ae60; }
-        .btn-rej { background: var(--danger); } .btn-rej:hover { background: #c0392b; }
-        .btn-end { background: var(--warning); color: #fff; } .btn-end:hover { background: #d35400; }
-        .btn-out { background: var(--dark); } .btn-out:hover { background: #1a1a24; }
-
-        /* --- Settings Modal --- */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; }
-        .modal-content h3 { margin-top: 0; color: var(--primary); }
-        .input-group { margin-bottom: 15px; text-align: left; }
-        .input-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: #7f8c8d; }
-        .input-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-        .modal-actions button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
-        .btn-save { background: var(--primary); color: white; }
-        .btn-close { background: #e0e0e0; color: var(--dark); }
-
-        #loading { text-align: center; color: var(--primary); font-weight: bold; padding: 20px; display: none; }
-        
-        /* Mobile Adjustments */
-        @media (max-width: 768px) {
-            .navbar { flex-direction: column; gap: 15px; }
-            .toolbar { flex-direction: column; }
-            .search-box, .btn-sync { width: 100%; }
-        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
+        .header { background: #1a237e; color: white; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .nav-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .nav-tabs button { padding: 10px 20px; font-size: 16px; border: none; background: #ddd; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .nav-tabs button.active { background: #1a237e; color: white; }
+        .section { display: none; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 900px; margin: auto; }
+        .section.active { display: block; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background-color: #1a237e; color: white; }
+        .btn-approve { background: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
+        .btn-reject { background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
+        .dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .dot-green { background-color: #4CAF50; }
+        .dot-red { background-color: #f44336; }
+        input[type="text"], input[type="password"] { padding: 10px; width: 60%; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; }
+        .btn-primary { background: #1a237e; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div id="loginScreen">
-        <div class="login-box">
-            <h2>🏢 Admin Login</h2>
-            <p style="color: #7f8c8d; font-size: 13px; margin-bottom: 20px;">Quality Education HR Portal</p>
-            <input type="password" id="adminPassInput" placeholder="Enter Admin Password">
-            <button onclick="checkPassword()">Access Dashboard</button>
-        </div>
+    <div class="header">
+        <h2>👨‍💼 Admin Dashboard - Quality Education</h2>
     </div>
 
-    <div class="modal" id="settingsModal">
-        <div class="modal-content">
-            <h3>⚙️ Password Settings</h3>
-            <div class="input-group">
-                <label>Admin Login Password:</label>
-                <input type="text" id="setAdminPass">
-            </div>
-            <div class="input-group">
-                <label>Training/Duty Password (View Only):</label>
-                <input type="text" id="setDutyPass" value="8888" disabled title="इसे बदलने के लिए Attendance App के कोड में 'DUTY_PASSWORD' बदलना होगा">
-                <small style="font-size:10px; color:#e74c3c;">(इसे एम्प्लॉई ऐप के कोड में बदलना पड़ता है)</small>
-            </div>
-            <div class="input-group">
-                <label>Excel/PDF Download Password (View Only):</label>
-                <input type="text" id="setExportPass" value="1234" disabled title="इसे बदलने के लिए Attendance App के कोड में बदलना होगा">
-            </div>
-            <div class="modal-actions">
-                <button class="btn-save" onclick="saveSettings()">💾 Save Admin Pass</button>
-                <button class="btn-close" onclick="closeSettings()">❌ Cancel</button>
-            </div>
-        </div>
+    <div class="nav-tabs">
+        <button class="active" onclick="showSection('liveStatus')">🔴 Live Status</button>
+        <button onclick="showSection('leaveRequests')">📅 Leave Requests</button>
+        <button onclick="showSection('searchEmp')">🔍 Search & PDF</button>
+        <button onclick="showSection('settings')">⚙️ Settings</button>
     </div>
 
-    <div class="navbar">
-        <div class="nav-brand">👑 Admin Dashboard</div>
-        <div class="nav-controls">
-            <button class="btn-icon" onclick="openSettings()">⚙️ Settings</button>
-            <button class="btn-icon" style="color: var(--danger);" onclick="logout()">🚪 Logout</button>
-        </div>
+    <div id="liveStatus" class="section active">
+        <h3>Live Employee Status (Today)</h3>
+        <button class="btn-primary" onclick="loadLiveStatus()">Refresh Status</button>
+        <table>
+            <thead><tr><th>Employee ID</th><th>Name</th><th>Current Status</th></tr></thead>
+            <tbody id="liveTableBody"><tr><td colspan="3">Loading...</td></tr></tbody>
+        </table>
     </div>
 
-    <div class="container">
-        <div class="stats-grid">
-            <div class="stat-card present">
-                <span class="title">Present Today</span>
-                <span class="value" id="statPresent">0</span>
-            </div>
-            <div class="stat-card leave">
-                <span class="title">Pending Leaves</span>
-                <span class="value" id="statLeave">0</span>
-            </div>
-            <div class="stat-card duty">
-                <span class="title">On Official Duty</span>
-                <span class="value" id="statDuty">0</span>
-            </div>
-            <div class="stat-card total">
-                <span class="title">Total Records Loaded</span>
-                <span class="value" id="statTotal">0</span>
-            </div>
-        </div>
+    <div id="leaveRequests" class="section">
+        <h3>Pending Leave Requests</h3>
+        <button class="btn-primary" onclick="loadLeaves()">Refresh Leaves</button>
+        <table>
+            <thead><tr><th>Date</th><th>ID</th><th>Name</th><th>Type</th><th>Reason</th><th>Action</th></tr></thead>
+            <tbody id="leaveTableBody"><tr><td colspan="6">No pending requests</td></tr></tbody>
+        </table>
+    </div>
 
-        <div class="toolbar">
-            <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search Employee Name or ID..." onkeyup="filterTable()">
-            <button class="btn-sync" onclick="fetchData()">🔄 Sync Live Data</button>
-        </div>
-
-        <div class="table-wrapper">
-            <div id="loading">⏳ Fetching live data from Google Servers...</div>
-            <table id="adminTable">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Emp ID</th>
-                        <th>Name</th>
-                        <th>Live Status</th>
-                        <th>Punch In</th>
-                        <th>Break Time</th>
-                        <th>Punch Out</th>
-                        <th>Net Hours</th>
-                        <th>⚡ Quick Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    </tbody>
+    <div id="searchEmp" class="section">
+        <h3>Search Employee Attendance</h3>
+        <input type="text" id="searchId" placeholder="Enter Employee ID (e.g. 1111)">
+        <button class="btn-primary" onclick="searchEmployee()">Search</button>
+        <button class="btn-primary" style="background:#D32F2F;" onclick="downloadEmpPDF()">📄 Download PDF</button>
+        
+        <div id="pdfArea" style="margin-top: 20px;">
+            <h4 id="pdfTitle" style="display:none; text-align:center;">Attendance Report</h4>
+            <table id="empSearchTable">
+                <thead><tr><th>Date</th><th>Time</th><th>Action Logged</th></tr></thead>
+                <tbody id="searchTableBody"><tr><td colspan="3">Search an ID to view logs</td></tr></tbody>
             </table>
         </div>
     </div>
 
-<script>
-    // ==========================================
-    // 🌐 API URL (आपका वाला लिंक)
-    // ==========================================
-    const API_URL = "https://script.google.com/macros/s/AKfycbxgZYvk1mkaHXZbwcYbtM126gBlZUWGcEjIEECBklkYmtxsn1vMgvEehNSfHEsNL_jMuQ/exec";
-    
-    // --- 1. SECURITY & PASSWORD SYSTEM ---
-    let currentAdminPass = localStorage.getItem('qe_admin_pass') || "admin123";
+    <div id="settings" class="section">
+        <h3>Change Admin Password</h3>
+        <p>यह पासवर्ड एम्प्लॉई पैनल में PDF डाउनलोड और ट्रेनिंग शुरू करने के काम आएगा।</p>
+        <input type="password" id="newPassword" placeholder="Enter New Password">
+        <button class="btn-primary" onclick="changePassword()">Update Password</button>
+        <p id="passMsg" style="color: green; font-weight: bold;"></p>
+    </div>
 
-    function checkPassword() {
-        const input = document.getElementById('adminPassInput').value;
-        if(input === currentAdminPass) {
-            document.getElementById('loginScreen').style.display = 'none';
-            fetchData(); 
-        } else { alert("❌ Incorrect Admin Password!"); }
-    }
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw4QGYfqyPKpATDwqaFI9eArrH82GuqWBV7_q3PUbl1QiqcaD77wLt1HzojcouT--18Eg/exec";
 
-    function logout() {
-        document.getElementById('adminPassInput').value = '';
-        document.getElementById('loginScreen').style.display = 'flex';
-    }
-
-    // Settings Modal Logic
-    function openSettings() {
-        document.getElementById('setAdminPass').value = currentAdminPass;
-        document.getElementById('settingsModal').style.display = 'flex';
-    }
-    function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
-    function saveSettings() {
-        const newAdminPass = document.getElementById('setAdminPass').value;
-        if(newAdminPass.length >= 4) {
-            localStorage.setItem('qe_admin_pass', newAdminPass);
-            currentAdminPass = newAdminPass;
-            alert("✅ Admin Password Updated Successfully!");
-            closeSettings();
-        } else { alert("Password must be at least 4 characters!"); }
-    }
-
-    // --- 2. FETCH & RENDER DATA ---
-    function fetchData() {
-        document.getElementById('loading').style.display = 'block';
-        document.getElementById('tableBody').innerHTML = '';
-
-        fetch(API_URL)
-            .then(res => res.json())
-            .then(res => {
-                document.getElementById('loading').style.display = 'none';
-                if(res.status === "Success" && res.data) {
-                    let reversedData = res.data.reverse(); 
-                    renderTable(reversedData);
-                    calculateStats(reversedData);
-                } else { alert("⚠️ Error fetching data."); }
-            })
-            .catch(error => {
-                document.getElementById('loading').style.display = 'none';
-                alert("Internet Error: Could not connect to Google Sheet.");
-            });
-    }
-
-    function renderTable(data) {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
-
-        data.forEach(row => {
-            const tr = document.createElement('tr');
-            
-            // 🎨 Colorful Status Badges
-            let statusHtml = `<span class="badge bg-success">${row.status}</span>`;
-            if(row.status.includes('Leave') || row.status.includes('Pending')) statusHtml = `<span class="badge bg-warning">${row.status}</span>`;
-            else if(row.status.includes('Duty')) statusHtml = `<span class="badge bg-info">🏃‍♂️ ${row.status}</span>`;
-            else if(row.status.includes('Break')) statusHtml = `<span class="badge bg-danger">☕ ${row.status}</span>`;
-            else if(row.status.includes('Approved ✅')) statusHtml = `<span class="badge bg-success">Leave Approved ✅</span>`;
-            else if(row.status.includes('Rejected ❌')) statusHtml = `<span class="badge bg-danger">Leave Rejected ❌</span>`;
-
-            // ⚡ Admin Actions Logic (Fix for Leave Sync)
-            let actionsHtml = `<div class="action-flex">`;
-            
-            // 1. Leave Approval System
-            if(row.status.includes('Pending') || row.status === 'Leave') {
-                actionsHtml += `<button class="btn-sm btn-appr" onclick="updateRecord('${row.date}', '${row.empId}', 'status', 'Approved ✅')">Approve ✅</button>`;
-                actionsHtml += `<button class="btn-sm btn-rej" onclick="updateRecord('${row.date}', '${row.empId}', 'status', 'Rejected ❌')">Reject ❌</button>`;
-            }
-            // 2. Clear Break / Duty
-            else if(row.status.includes('Break') || row.status.includes('Duty')) {
-                actionsHtml += `<button class="btn-sm btn-end" onclick="updateRecord('${row.date}', '${row.empId}', 'status', 'Present')">End Status 🔙</button>`;
-            }
-            // 3. Force Punch Out
-            else if(row.status.includes('Present') && row.punchOut === '-') {
-                actionsHtml += `<button class="btn-sm btn-out" onclick="forcePunchOut('${row.date}', '${row.empId}')">Force Out 🛑</button>`;
-            } 
-            else {
-                actionsHtml += `<span style="color:#b5b5c3; font-size:12px; font-weight:600;">No Action</span>`;
-            }
-            actionsHtml += `</div>`;
-
-            tr.innerHTML = `
-                <td style="font-weight:600; color:var(--primary);">${row.date}</td>
-                <td>${row.empId}</td>
-                <td style="font-weight:700;">${row.name}</td>
-                <td>${statusHtml}</td>
-                <td>${row.punchIn}</td>
-                <td>${row.breakTime}</td>
-                <td>${row.punchOut}</td>
-                <td><strong style="color:var(--success); font-size:15px;">${row.netHours}</strong></td>
-                <td>${actionsHtml}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    // --- 3. ANALYTICS STATS ---
-    function calculateStats(data) {
-        const todayStr = new Date().toLocaleDateString('en-GB'); 
-        let presentCount = 0, leaveCount = 0, dutyCount = 0;
-
-        data.forEach(row => {
-            if(row.date === todayStr) {
-                if(row.status.includes('Present') || row.status.includes('Break')) presentCount++;
-                if(row.status.includes('Pending') || row.status.includes('Leave')) leaveCount++;
-                if(row.status.includes('Duty')) dutyCount++;
-            }
-        });
-
-        document.getElementById('statTotal').innerText = data.length;
-        document.getElementById('statPresent').innerText = presentCount;
-        document.getElementById('statDuty').innerText = dutyCount;
-        document.getElementById('statLeave').innerText = leaveCount;
-    }
-
-    // --- 4. ACTION FUNCTIONS ---
-    function updateRecord(date, empId, field, newValue) {
-        if(!confirm(`क्या आप ${empId} का स्टेटस '${newValue}' में बदलना चाहते हैं?`)) return;
-
-        document.getElementById('loading').style.display = 'block';
-        let payload = { action: "update", date: date, empId: empId };
-        payload[field] = newValue;
-
-        fetch(API_URL, { method: "POST", body: JSON.stringify(payload) })
-        .then(res => res.json())
-        .then(data => {
-            alert("✅ Update Successful!");
-            fetchData(); 
-        });
-    }
-
-    function forcePunchOut(date, empId) {
-        if(!confirm(`Force Punch-Out for ${empId}?`)) return;
-
-        let now = new Date();
-        let punchOutStr = now.toLocaleTimeString('en-US', { hour12: true });
-        
-        let payload = { 
-            action: "update", date: date, empId: empId,
-            punchOut: punchOutStr, netHours: "Forced Out (Admin)" 
-        };
-
-        document.getElementById('loading').style.display = 'block';
-        fetch(API_URL, { method: "POST", body: JSON.stringify(payload) })
-        .then(res => res.json())
-        .then(data => {
-            alert("✅ Employee Punched Out!");
-            fetchData();
-        });
-    }
-
-    // --- 5. SEARCH FILTER ---
-    function filterTable() {
-        let input = document.getElementById("searchInput").value.toUpperCase();
-        let tr = document.getElementById("adminTable").getElementsByTagName("tr");
-        for (let i = 1; i < tr.length; i++) {
-            let tdId = tr[i].getElementsByTagName("td")[1];
-            let tdName = tr[i].getElementsByTagName("td")[2];
-            if (tdId || tdName) {
-                let txtValueId = tdId.textContent || tdId.innerText;
-                let txtValueName = tdName.textContent || tdName.innerText;
-                if (txtValueId.toUpperCase().indexOf(input) > -1 || txtValueName.toUpperCase().indexOf(input) > -1) {
-                    tr[i].style.display = "";
-                } else {
-                    tr[i].style.display = "none";
-                }
-            }       
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.nav-tabs button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            event.target.classList.add('active');
+            if(id === 'liveStatus') loadLiveStatus();
+            if(id === 'leaveRequests') loadLeaves();
         }
-    }
-</script>
 
+        async function loadLiveStatus() {
+            let today = new Date().toLocaleDateString('hi-IN'); // Format: DD/MM/YYYY
+            let res = await fetch(`${SCRIPT_URL}?action=getLiveStatus&date=${today}`);
+            let data = await res.json();
+            let tbody = document.getElementById("liveTableBody");
+            tbody.innerHTML = "";
+            
+            // Temporary Master List for Admin (Sync this with your employee list)
+            const EMP_LIST = { "1111": "Devendra Kumar", "1112": "Rahul Sharma", "1113": "Priya Singh", "1114": "Amit Verma" };
+            
+            for(let id in EMP_LIST) {
+                let status = data[id] ? data[id].status : "Not Punched In";
+                let dotClass = (status === "in" || status === "work" || status === "train") ? "dot-green" : "dot-red";
+                let displayStatus = status === "in" ? "Punched In" : status === "out" ? "Punched Out" : status;
+                
+                tbody.innerHTML += `<tr>
+                    <td>${id}</td>
+                    <td>${EMP_LIST[id]}</td>
+                    <td><span class="dot ${dotClass}"></span> ${displayStatus}</td>
+                </tr>`;
+            }
+        }
+
+        async function loadLeaves() {
+            let res = await fetch(`${SCRIPT_URL}?action=getPendingLeaves`);
+            let data = await res.json();
+            let tbody = document.getElementById("leaveTableBody");
+            tbody.innerHTML = "";
+            if(data.length === 0) return tbody.innerHTML = `<tr><td colspan="6">No pending requests</td></tr>`;
+            
+            data.forEach(req => {
+                tbody.innerHTML += `<tr>
+                    <td>${req.date}</td><td>${req.id}</td><td>${req.name}</td><td>${req.type}</td><td>${req.reason}</td>
+                    <td>
+                        <button class="btn-approve" onclick="updateLeave('${req.date}', '${req.id}', 'Approved')">Approve</button>
+                        <button class="btn-reject" onclick="updateLeave('${req.date}', '${req.id}', 'Rejected')">Reject</button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        async function updateLeave(date, id, status) {
+            if(!confirm(`Are you sure you want to ${status} this leave?`)) return;
+            await fetch(SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "updateLeave", date: date, id: id, newStatus: status })
+            });
+            alert(`Leave ${status} successfully!`);
+            loadLeaves();
+        }
+
+        async function searchEmployee() {
+            let id = document.getElementById("searchId").value;
+            if(!id) return alert("Enter ID!");
+            document.getElementById("searchTableBody").innerHTML = `<tr><td colspan="3">Searching...</td></tr>`;
+            let res = await fetch(`${SCRIPT_URL}?action=getEmpData&id=${id}`);
+            let data = await res.json();
+            let tbody = document.getElementById("searchTableBody");
+            tbody.innerHTML = "";
+            if(data.length === 0) return tbody.innerHTML = `<tr><td colspan="3">No records found for this ID.</td></tr>`;
+            
+            document.getElementById("pdfTitle").innerText = `Attendance Report - ID: ${id}`;
+            data.forEach(log => {
+                tbody.innerHTML += `<tr><td>${log.date}</td><td>${log.time}</td><td>${log.action}</td></tr>`;
+            });
+        }
+
+        function downloadEmpPDF() {
+            let element = document.getElementById('pdfArea');
+            document.getElementById('pdfTitle').style.display = 'block';
+            let opt = { margin: 0.5, filename: `Employee_${document.getElementById("searchId").value}_Report.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
+            html2pdf().set(opt).from(element).save().then(() => { document.getElementById('pdfTitle').style.display = 'none'; });
+        }
+
+        async function changePassword() {
+            let newPass = document.getElementById("newPassword").value;
+            if(!newPass) return alert("Enter a valid password!");
+            await fetch(SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "updatePassword", newPass: newPass })
+            });
+            document.getElementById("passMsg").innerText = "Password updated successfully in Database!";
+            setTimeout(() => document.getElementById("passMsg").innerText = "", 3000);
+        }
+
+        window.onload = loadLiveStatus;
+    </script>
 </body>
 </html>
