@@ -155,7 +155,7 @@
 
               <script>
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        // ध्यान दें: यहाँ अपना नया SCRIPT_URL पेस्ट करें
+        // Dhyan de: Yahan apna naya SCRIPT_URL paste karein
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw4QGYfqyPKpATDwqaFI9eArrH82GuqWBV7_q3PUbl1QiqcaD77wLt1HzojcouT--18Eg/exec";
 
@@ -399,7 +399,7 @@
             } catch(e) { alert("Failed to add exception."); searchEmployee(); }
         }
 
-        // --- PROFESSIONAL BLANK-FREE PDF FIX ---
+        // --- 100% BLANK-PROOF DIRECT HTML TO PDF ---
         async function downloadEmpPDF() {
             let id = document.getElementById("searchId").value;
             if(!id) return alert("Please search an Employee ID first.");
@@ -414,40 +414,33 @@
                 
                 let empName = EMP_LIST[id] ? EMP_LIST[id].name : "Unknown";
                 
-                // नया टेबल डिव (सिर्फ PDF के लिए)
-                let tempDiv = document.createElement('div');
-                tempDiv.style.width = "1000px"; 
-                tempDiv.style.padding = "30px";
-                tempDiv.style.background = "white";
-                tempDiv.style.fontFamily = "'Segoe UI', Arial, sans-serif";
+                // YAHAN PAR BADLAAV HUA HAI: Ab hum Div banakar page par nahi chipkayenge,
+                // Seedhe HTML Text ko hi PDF engine ko de denge jisse Blank aane ka chance 0% ho jayega.
                 
-                // Hide Div but don't use absolute/z-index to avoid blank PDF
-                tempDiv.style.position = "fixed";
-                tempDiv.style.top = "-9999px"; 
-                tempDiv.style.left = "0";
-
-                let tableHTML = `
-                <div style="border-bottom: 3px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-                    <h1 style="color: #1a237e; margin: 0; font-size: 26px;">Employee Attendance Report</h1>
-                    <div style="text-align: right;">
-                        <p style="margin: 0; font-weight: bold; color: #333; font-size:14px;">Name: ${empName} (ID: ${id})</p>
-                        <p style="margin: 0; font-size: 11px; color: #666;">Generated on: ${new Date().toLocaleString('en-IN')}</p>
+                let finalHTMLString = `
+                <div style="width: 1000px; padding: 20px; background: white; font-family: 'Segoe UI', Arial, sans-serif; color: black;">
+                    <div style="border-bottom: 3px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                        <h1 style="color: #1a237e; margin: 0; font-size: 26px;">Employee Attendance Report</h1>
+                        <div style="text-align: right;">
+                            <p style="margin: 0; font-weight: bold; color: #333; font-size:14px;">Name: ${empName} (ID: ${id})</p>
+                            <p style="margin: 0; font-size: 11px; color: #666;">Generated on: ${new Date().toLocaleString('en-IN')}</p>
+                        </div>
                     </div>
-                </div>
-                
-                <table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:center;" border="1" bordercolor="#ccc">
-                    <thead>
-                        <tr style="background-color:#1a237e; color:white; height: 35px;">
-                            <th style="width:12%;">Date</th>
-                            <th style="width:12%;">Status</th>
-                            <th style="width:10%;">In Time</th>
-                            <th style="width:10%;">Out Time</th>
-                            <th style="width:12%;">Break Time</th>
-                            <th style="width:12%;">Training Time</th> <th style="width:14%;">Admin Exception</th>
-                            <th style="width:18%;">Total Work Hrs</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
+                    
+                    <table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:center;" border="1" bordercolor="#ccc">
+                        <thead>
+                            <tr style="background-color:#1a237e; color:white; height: 35px;">
+                                <th style="width:12%;">Date</th>
+                                <th style="width:12%;">Status</th>
+                                <th style="width:10%;">In Time</th>
+                                <th style="width:10%;">Out Time</th>
+                                <th style="width:12%;">Break Time</th>
+                                <th style="width:12%;">Training Time</th>
+                                <th style="width:14%;">Admin Exception</th>
+                                <th style="width:18%;">Total Work Hrs</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
 
                 rawDataArray.forEach(jsonStr => {
                     try {
@@ -470,40 +463,35 @@
                             ? `<span style="color:#0288D1; font-weight:bold;">+${formatTime(excSecs)}</span>` 
                             : `<span style="color:#999;">-</span>`;
 
-                        tableHTML += `
+                        finalHTMLString += `
                         <tr style="height: 40px;">
-                            <td style="font-weight: bold;">${dateToPrint}</td>
+                            <td style="font-weight: bold; color: black;">${dateToPrint}</td>
                             <td style="font-weight: bold; color: ${statusText === 'Present' ? '#2E7D32' : '#C62828'}">${statusText}</td>
-                            <td>${emp.inTime}</td>
-                            <td>${emp.outTime}</td>
-                            <td>${formatTime(emp.breakSecs)}</td>
-                            <td>${formatTime(emp.trainSecs)}</td>
-                            <td style="background-color: #f1f8e9;">${excDisplay}</td>
+                            <td style="color: black;">${emp.inTime}</td>
+                            <td style="color: black;">${emp.outTime}</td>
+                            <td style="color: black;">${formatTime(emp.breakSecs)}</td>
+                            <td style="color: black;">${formatTime(emp.trainSecs)}</td>
+                            <td style="background-color: #f1f8e9; color: black;">${excDisplay}</td>
                             <td style="font-weight:bold; color:${wColor};">${formatTime(totalWorkSecs)}</td>
                         </tr>`;
                     } catch(e) {}
                 });
 
-                tableHTML += `</tbody></table>
+                finalHTMLString += `</tbody></table>
                 <div style="margin-top: 20px; font-size: 11px; color: #777; text-align: center;">
                     * This is an automated system generated report. Contact System Administrator for discrepancies.
+                </div>
                 </div>`;
 
-                tempDiv.innerHTML = tableHTML;
-                document.body.appendChild(tempDiv);
-
-                // 'windowWidth: 1200' prevents the left-side cropping
                 let opt = {
                     margin: [0.4, 0.4, 0.4, 0.4],
                     filename: `Attendance_Report_${id}.pdf`,
                     image: { type: 'jpeg', quality: 1.0 }, 
-                    html2canvas: { scale: 3, useCORS: true, logging: false, windowWidth: 1200 }, 
-                    jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }, 
-                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
+                    html2canvas: { scale: 3, useCORS: true, logging: false }, 
+                    jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
                 };
 
-                html2pdf().set(opt).from(tempDiv).save().then(() => {
-                    document.body.removeChild(tempDiv);
+                html2pdf().set(opt).from(finalHTMLString).save().then(() => {
                     alert("✅ Report downloaded successfully.");
                 });
 
@@ -521,4 +509,5 @@
         }
     </script>
 </body>
-</html>                                            
+</html>
+                                                             
