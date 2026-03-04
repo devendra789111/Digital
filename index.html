@@ -399,57 +399,145 @@
             } catch(e) { alert("Failed to add exception."); searchEmployee(); }
         }
 
-        // --- 100% BULLETPROOF ON-SCREEN PDF DOWNLOAD ---
-        function downloadEmpPDF() {
+        // --- 100% BULLETPROOF MONTHLY PDF WITH NO CROPPING ---
+        async function downloadEmpPDF() {
             let id = document.getElementById("searchId").value;
-            if(!id) return alert("Please Search an Employee ID first!");
-            
-            let tbody = document.getElementById("searchTableBody");
-            if(tbody.innerText.includes("No records") || tbody.innerText.includes("Fetching")) {
-                return alert("No data available to print.");
-            }
+            if(!id) return alert("Please search an Employee ID first.");
 
-            alert("⏳ Generating PDF... Please wait."); 
+            let choice = prompt("Which month's report do you want to download?\n1 = Current Month\n2 = Last Month", "1");
+            if (choice !== "1" && choice !== "2") return alert("Download cancelled.");
+
+            alert("⏳ Generating PDF report... Please wait."); 
             
-            // हम सीधे स्क्रीन पर मौजूद असली 'pdfArea' को टारगेट कर रहे हैं 
-            let element = document.getElementById('pdfArea'); 
-            let title = document.getElementById('pdfTitle'); 
-            let wrapper = document.getElementById('pdfTableWrapper');
-            let table = document.getElementById('empSearchTable');
-            
-            // PDF जनरेट करते समय बटन छिपा दें
-            let btns = element.querySelectorAll('.btn-exception'); 
-            btns.forEach(b => b.style.display = 'none');
-            
-            title.style.display = 'block'; 
-            wrapper.style.overflow = 'visible'; 
-            
-            // फोन में भी टेक्स्ट को चौड़ा और साफ़ रखने के लिए टेम्प्रेरी चौड़ाई (Width)
-            let oldWidth = table.style.width;
-            table.style.width = "1100px";
-            
-            let opt = { 
-                margin: [0.3, 0.3, 0.3, 0.3], 
-                filename: `Admin_Report_${id}.pdf`, 
-                image: { type: 'jpeg', quality: 1.0 }, 
-                html2canvas: { scale: 2, useCORS: true, logging: false }, 
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
-            };
-            
-            html2pdf().set(opt).from(element).save().then(() => { 
-                // PDF डाउनलोड होते ही पेज को वापस नार्मल कर दें
-                title.style.display = 'none'; 
-                wrapper.style.overflow = 'auto'; 
-                table.style.width = oldWidth; 
-                btns.forEach(b => b.style.display = 'inline-block'); 
-            }).catch(err => {
-                alert("Error generating PDF.");
-                title.style.display = 'none'; 
-                wrapper.style.overflow = 'auto'; 
-                table.style.width = oldWidth;
-                btns.forEach(b => b.style.display = 'inline-block'); 
-            });
+            try {
+                let res = await fetch(`${SCRIPT_URL}?action=getEmpData&id=${id}&nocache=${Date.now()}`);
+                let rawDataArray = await res.json();
+                
+                if(rawDataArray.length === 0) return alert("No records found to export.");
+
+                // Calculate Target Month
+                let targetDate = new Date();
+                if (choice === "2") targetDate.setMonth(targetDate.getMonth() - 1);
+                let t_mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+                let t_yyyy = targetDate.getFullYear();
+                let targetSuffix = `${t_mm}/${t_yyyy}`;
+                let monthNameStr = targetDate.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+                
+                let empName = EMP_LIST[id] ? EMP_LIST[id].name : "Unknown";
+                
+                // Create a temporary container
+                let printDiv = document.createElement('div');
+                printDiv.style.width = "1050px"; // Perfect A4 width
+                printDiv.style.padding = "20px";
+                printDiv.style.background = "white";
+                printDiv.style.color = "black";
+                printDiv.style.fontFamily = "'Segoe UI', Arial, sans-serif";
+                printDiv.style.position = "absolute";
+                printDiv.style.top = "0";
+                printDiv.style.left = "0";
+                printDiv.style.zIndex = "-100"; // Background me rehega par blank nahi hoga
+
+                let tableHTML = `
+                <div style="border-bottom: 3px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h1 style="color: #1a237e; margin: 0; font-size: 26px;">Employee Attendance Report</h1>
+                        <p style="margin: 5px 0 0 0; font-size: 15px; font-weight: bold; color: #333;">Month: ${monthNameStr}</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p style="margin: 0; font-weight: bold; color: #333; font-size:14px;">Name: ${empName} (ID: ${id})</p>
+                        <p style="margin: 5px 0 0 0; font-size: 11px; color: #666;">Generated on: ${new Date().toLocaleString('en-IN')}</p>
+                    </div>
+                </div>
+                
+                <table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:center;" border="1" bordercolor="#ccc">
+                    <thead>
+                        <tr style="background-color:#1a237e; color:white; height: 35px;">
+                            <th style="width:12%; padding:6px;">Date</th>
+                            <th style="width:12%; padding:6px;">Status</th>
+                            <th style="width:10%; padding:6px;">In Time</th>
+                            <th style="width:10%; padding:6px;">Out Time</th>
+                            <th style="width:12%; padding:6px;">Break Time</th>
+                            <th style="width:12%; padding:6px;">Training Time</th>
+                            <th style="width:14%; padding:6px;">Admin Exception</th>
+                            <th style="width:18%; padding:6px;">Total Work Hrs</th>
+                       </tr>
+                    </thead>
+                    <tbody>`;
+
+                let hasDataForMonth = false;
+
+                rawDataArray.forEach(jsonStr => {
+                    try {
+                        let emp = JSON.parse(jsonStr); if (!emp) return;
+                        let dateToPrint = emp.recordDate || emp.date || "-";
+                        
+                        // Only add data for the selected month
+                        if(dateToPrint.endsWith(targetSuffix)) {
+                            hasDataForMonth = true;
+                            
+                            let excSecs = emp.exceptionSecs || 0;
+                            let totalWorkSecs = (emp.workSecs || 0) + (emp.trainSecs || 0) + excSecs;
+                            
+                            let wColor = totalWorkSecs >= 28800 ? "#2E7D32" : (totalWorkSecs > 14400 ? "#E65100" : "#C62828");
+                            let statusText = emp.statusText || "Present";
+                            let isLeaveOrOff = ["leave", "off", "holiday", "el", "cl", "sl", "lwp"].some(v => statusText.toLowerCase().includes(v));
+
+                            if (!isLeaveOrOff && emp.mode !== "leave") {
+                                if (emp.isPunchedOut && totalWorkSecs <= 14400 && totalWorkSecs > 0) statusText = "Half Day";
+                                else statusText = "Present";
+                            }
+                            
+                            let excDisplay = excSecs > 0 ? `<span style="color:#0288D1; font-weight:bold;">+${formatTime(excSecs)}</span>` : `<span style="color:#999;">-</span>`;
+
+                            // inline CSS to prevent page break inside row
+                            tableHTML += `
+                            <tr style="height: 40px; background-color: white; page-break-inside: avoid;">
+                                <td style="font-weight: bold; color: black; padding:6px;">${dateToPrint}</td>
+                                <td style="font-weight: bold; color: ${statusText === 'Present' ? '#2E7D32' : '#C62828'}; padding:6px;">${statusText}</td>
+                                <td style="color: black; padding:6px;">${emp.inTime}</td>
+                                <td style="color: black; padding:6px;">${emp.outTime}</td>
+                                <td style="color: black; padding:6px;">${formatTime(emp.breakSecs)}</td>
+                                <td style="color: black; padding:6px;">${formatTime(emp.trainSecs)}</td>
+                                <td style="background-color: #f1f8e9; color: black; padding:6px;">${excDisplay}</td>
+                                <td style="font-weight:bold; color:${wColor}; padding:6px;">${formatTime(totalWorkSecs)}</td>
+                            </tr>`;
+                        }
+                    } catch(e) {}
+                });
+
+                tableHTML += `</tbody></table>
+                <div style="margin-top: 20px; font-size: 11px; color: #777; text-align: center;">
+                    * This is an automated system generated report for ${monthNameStr}. Contact System Administrator for discrepancies.
+                </div>`;
+
+                if(!hasDataForMonth) {
+                    return alert(`No attendance records found for ${monthNameStr}.`);
+                }
+
+                printDiv.innerHTML = tableHTML;
+                document.body.appendChild(printDiv);
+
+                // 'windowWidth: 1200' ensures CSS applies properly on mobile without shrinking
+                let opt = {
+                    margin: [0.3, 0.3, 0.3, 0.3], 
+                    filename: `Report_${id}_${monthNameStr.replace(' ', '_')}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 }, 
+                    html2canvas: { scale: 2, useCORS: true, logging: false, windowWidth: 1200 }, 
+                    jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' },
+                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
+                };
+
+                setTimeout(() => {
+                    html2pdf().set(opt).from(printDiv).save().then(() => {
+                        document.body.removeChild(printDiv);
+                        alert("✅ Report downloaded successfully.");
+                    }).catch(err => {
+                        document.body.removeChild(printDiv);
+                        alert("Error generating PDF.");
+                    });
+                }, 400);
+
+            } catch(e) { alert("Failed to fetch data from the server."); }
         }
 
         async function updateSystemPasswords() {
@@ -463,4 +551,4 @@
         }
     </script>
 </body>
-</html>                                                                              
+</html>                                                                                                                                          
