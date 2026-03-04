@@ -153,7 +153,10 @@
         </div>
     </div>
 
-              <script>
+             <script>
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // ध्यान दें: यहाँ अपना नया SCRIPT_URL पेस्ट करें
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw4QGYfqyPKpATDwqaFI9eArrH82GuqWBV7_q3PUbl1QiqcaD77wLt1HzojcouT--18Eg/exec";
 
         let EMP_LIST = {}; 
@@ -198,8 +201,30 @@
             } catch(e) { document.getElementById("empLoadingMsg").innerText = "Error: Failed to fetch data. Check URL."; }
         }
 
-        async function registerEmployee() { /* Registration Logic remains same */ }
-        async function deactivateEmp(id) { /* Deactivate Logic remains same */ }
+        async function registerEmployee() {
+            let name = document.getElementById('regName').value.trim();
+            let mobile = document.getElementById('regMobile').value.trim();
+            let aadhar = document.getElementById('regAadhar').value.trim();
+            let joinDate = document.getElementById('regJoinDate').value;
+
+            if(!name || !mobile || !aadhar || !joinDate) return alert("Please fill all details!");
+            if(mobile.length < 10 || aadhar.length < 12) return alert("Enter valid Mobile and Aadhar number!");
+
+            document.getElementById('empTableBody').innerHTML = `<tr><td colspan="6">Registering... Please wait!</td></tr>`;
+            try {
+                let res = await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "addEmployee", name: name, mobile: mobile, aadhar: aadhar, joinDate: joinDate }) });
+                let data = await res.json();
+                alert(`✅ Registration Successful!\nNew Employee ID is: ${data.newId}`);
+                document.getElementById('regName').value = ""; document.getElementById('regMobile').value = ""; document.getElementById('regAadhar').value = ""; document.getElementById('regJoinDate').value = "";
+                fetchEmployees(); 
+            } catch(e) { alert("Registration failed. Check connection."); }
+        }
+
+        async function deactivateEmp(id) {
+            if(!confirm(`Are you sure you want to Deactivate Employee ID: ${id}?`)) return;
+            await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "deactivateEmployee", id: id }) });
+            alert("Employee Deactivated!"); fetchEmployees();
+        }
 
         // --- LIVE STATUS (WITH ADMIN PUNCH OUT) ---
         async function loadLiveStatus() {
@@ -251,9 +276,42 @@
             loadLiveStatus();
         }
 
-        async function forceCommand(id, type) { /* Stop Train Logic */ }
+        async function forceCommand(id, type) {
+            if(!confirm("Are you sure you want to stop their training remotely?")) return;
+            await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "forceAction", id: id, forceType: type }) });
+            alert("Command Sent!"); loadLiveStatus();
+        }
 
-        // --- SEARCH, PDF & EXCEPTION (UPDATED UI) ---
+        // --- LEAVE REQUESTS ---
+        async function loadLeaves(filterStatus = 'Pending') {
+            document.getElementById('leaveTableTitle').innerText = `Showing: ${filterStatus} Requests`;
+            try {
+                let res = await fetch(`${SCRIPT_URL}?action=getPendingLeaves&nocache=${Date.now()}`);
+                let data = await res.json();
+                let tbody = document.getElementById("leaveTableBody"); tbody.innerHTML = "";
+                let filteredData = data.filter(req => req.status === filterStatus);
+                
+                if(filteredData.length === 0) return tbody.innerHTML = `<tr><td colspan="8">No ${filterStatus} leaves found.</td></tr>`;
+                
+                filteredData.reverse().forEach(req => {
+                    let actionHtml = "";
+                    if (req.status === "Pending") actionHtml = `<button class="btn-approve" onclick="updateLeave('${req.reqId}', 'Approved')">Approve</button> <button class="btn-reject" onclick="updateLeave('${req.reqId}', 'Rejected')">Reject</button>`;
+                    else if (req.status === "Approved") actionHtml = `<span style="color: green; font-weight: bold;">✅ Approved</span>`;
+                    else if (req.status === "Rejected") actionHtml = `<span style="color: red; font-weight: bold;">❌ Rejected</span>`;
+
+                    let certHtml = req.hasCert === "Yes" ? `<span style="color:green; font-weight:bold;">✅ Uploaded</span>` : `<span style="color:#555;">No</span>`;
+                    tbody.innerHTML += `<tr><td style="font-size: 12px; color: gray;">${req.date}</td><td style="font-weight:bold; color:#1a237e;">${req.leaveDate}</td><td>${req.id}</td><td>${req.name}</td><td>${req.type}</td><td>${req.reason}</td><td>${certHtml}</td><td>${actionHtml}</td></tr>`;
+                });
+            } catch(e) { console.log("Leave fetch error"); }
+        }
+
+        async function updateLeave(reqId, status) {
+            if(!confirm(`Mark this leave as ${status}?`)) return;
+            await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "updateLeave", reqId: reqId, newStatus: status }) });
+            alert(`Leave ${status} successfully!`); loadLeaves('Pending'); 
+        }
+
+        // --- SEARCH & EXCEPTION SYSTEM ---
         async function searchEmployee() {
             let id = document.getElementById("searchId").value;
             if(!id) return alert("Please enter Employee ID!");
@@ -278,7 +336,7 @@
                         let excSecs = emp.exceptionSecs || 0;
                         totalExceptionTime += excSecs;
                         
-                        let totalWorkSecs = (emp.workSecs || 0) + (emp.trainSecs || 0) + excSecs; // Exception is ADDED here
+                        let totalWorkSecs = (emp.workSecs || 0) + (emp.trainSecs || 0) + excSecs; 
                         
                         let wColor = totalWorkSecs >= 28800 ? "green" : (totalWorkSecs > 14400 ? "orange" : "red");
                         let statusHtml = emp.statusText || "Present";
@@ -294,14 +352,12 @@
 
                         let dateToPrint = emp.recordDate || emp.date || "-";
                         
-                        let excHtml = excSecs > 0 ? `<span style="color:#0288D1; font-weight:bold;">+${formatTime(excSecs)}</span>` : `<span style="color:#aaa;">-</span>`;
+                        let excHtml = excSecs > 0 ? `<span style="color:#0288D1; font-weight:bold; font-size:13px;">+${formatTime(excSecs)}</span>` : `<span style="color:#aaa;">-</span>`;
                         if (!isLeaveOrOff && emp.isPunchedOut) {
                             excHtml += `<br><button class="btn-exception" onclick="openExceptionModal('${emp.id}', '${dateToPrint}', '${emp.name}')">+ Add Exc</button>`;
                         }
 
-                        // Total Hrs with Breakdown
                         let totalDisplay = `<span style="font-weight:bold; font-size:14px; color:${wColor};">${formatTime(totalWorkSecs)}</span>`;
-                        if(excSecs > 0) totalDisplay += `<br><small style="color:#0288D1; font-size:10px;">(Incl. Exception)</small>`;
 
                         tbody.innerHTML += `<tr>
                             <td>${dateToPrint}</td><td>${emp.id}</td><td>${emp.name}</td><td>${statusHtml}</td>
@@ -342,21 +398,51 @@
                     body: JSON.stringify({ action: "addException", id: currentExcId, date: currentExcDate, exceptionMins: mins }) 
                 });
                 alert(`✅ Successfully added ${mins} minutes exception!`);
-                searchEmployee(); // Table immediately updates
+                searchEmployee(); 
             } catch(e) { alert("Failed to add exception."); searchEmployee(); }
         }
 
+        // --- HIGH QUALITY PDF DOWNLOAD FOR ADMIN ---
         function downloadEmpPDF() {
-            let element = document.getElementById('pdfArea'); let title = document.getElementById('pdfTitle'); let wrapper = document.getElementById('pdfTableWrapper');
-            let btns = element.querySelectorAll('.btn-exception'); btns.forEach(b => b.style.display = 'none');
-            title.style.display = 'block'; wrapper.style.overflow = 'visible'; 
-            let opt = { margin: 0.3, filename: `Report_Emp_${document.getElementById("searchId").value}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, scrollY: 0 }, jsPDF: { unit: 'in', format: 'landscape', orientation: 'landscape' } };
-            html2pdf().set(opt).from(element).save().then(() => { title.style.display = 'none'; wrapper.style.overflow = 'auto'; btns.forEach(b => b.style.display = 'inline-block'); });
+            let element = document.getElementById('pdfArea'); 
+            let title = document.getElementById('pdfTitle'); 
+            let wrapper = document.getElementById('pdfTableWrapper');
+            
+            // PDF बनाते समय बटन छिपा दें
+            let btns = element.querySelectorAll('.btn-exception'); 
+            btns.forEach(b => b.style.display = 'none');
+            
+            title.style.display = 'block'; 
+            wrapper.style.overflow = 'visible'; 
+            
+            // McKinsey Style Settings
+            let opt = { 
+                margin: [0.3, 0.3, 0.3, 0.3], 
+                filename: `Admin_Report_${document.getElementById("searchId").value}.pdf`, 
+                image: { type: 'jpeg', quality: 0.98 }, 
+                html2canvas: { scale: 2, useCORS: true, logging: false }, 
+                jsPDF: { unit: 'in', format: 'a3', orientation: 'landscape' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } // इससे लाइन बीच में नहीं कटेगी
+            };
+            
+            html2pdf().set(opt).from(element).save().then(() => { 
+                title.style.display = 'none'; 
+                wrapper.style.overflow = 'auto'; 
+                // डाउनलोड होने के बाद बटन वापस दिखा दें
+                btns.forEach(b => b.style.display = 'inline-block'); 
+                alert("✅ PDF सफलतापूर्वक डाउनलोड हो गई है।");
+            });
         }
-        
-        async function loadLeaves(filterStatus = 'Pending') { /* Same logic for Leaves */ }
-        async function updateLeave(reqId, status) { /* Same */ }
-        async function updateSystemPasswords() { /* Same */ }
+
+        async function updateSystemPasswords() {
+            let aPass = document.getElementById("newAdminPass").value; let tPass = document.getElementById("newTrainPass").value;
+            if(!aPass && !tPass) return alert("Enter at least one password!");
+            document.getElementById("passMsg").innerText = "Updating... Please wait.";
+            await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "updatePasswords", adminPass: aPass, trainPass: tPass }) });
+            document.getElementById("passMsg").innerText = "✅ Passwords updated successfully!";
+            setTimeout(() => document.getElementById("passMsg").innerText = "", 3000);
+            document.getElementById("newAdminPass").value = ""; document.getElementById("newTrainPass").value = "";
+        }
     </script>
 </body>
 </html>
