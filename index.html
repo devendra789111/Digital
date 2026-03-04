@@ -153,7 +153,7 @@
         </div>
     </div>
 
-              <script>
+             <script>
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         // ध्यान दें: यहाँ अपना नया SCRIPT_URL पेस्ट करें
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -399,7 +399,7 @@
             } catch(e) { alert("Failed to add exception."); searchEmployee(); }
         }
 
-        // --- 100% BLANK-FREE HTML STRING PDF ---
+        // --- 100% BULLETPROOF OPACITY TRICK FOR MOBILE PDF ---
         async function downloadEmpPDF() {
             let id = document.getElementById("searchId").value;
             if(!id) return alert("Please search an Employee ID first.");
@@ -415,7 +415,6 @@
                 
                 if(rawDataArray.length === 0) return alert("No records found to export.");
 
-                // Target Month calculation
                 let targetDate = new Date();
                 if (choice === "2") targetDate.setMonth(targetDate.getMonth() - 1);
                 let t_mm = String(targetDate.getMonth() + 1).padStart(2, '0');
@@ -425,39 +424,50 @@
                 
                 let empName = EMP_LIST[id] ? EMP_LIST[id].name : "Unknown";
                 
-                // Yahan se hum direct HTML String bna rahe hain. Isko screen par render kiye bina 
-                // html2pdf internal engine se padhega, jisse yeh Zindagi mein kabhi Blank nahi ho sakta!
-                let htmlStringForPDF = `
-                <div style="width: 1050px; padding: 30px; background-color: #ffffff; color: #000000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                    <div style="border-bottom: 3px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h1 style="color: #1a237e; margin: 0; font-size: 26px;">Employee Attendance Report</h1>
-                            <p style="margin: 5px 0 0 0; font-size: 15px; font-weight: bold; color: #333;">Month: ${monthNameStr}</p>
-                        </div>
-                        <div style="text-align: right;">
-                            <p style="margin: 0; font-weight: bold; color: #333; font-size:14px;">Name: ${empName} (ID: ${id})</p>
-                            <p style="margin: 5px 0 0 0; font-size: 11px; color: #666;">Generated on: ${new Date().toLocaleString('en-IN')}</p>
-                        </div>
+                // Opacity Trick: Screen par banega, par 99.9% transparent hoga
+                let printDiv = document.createElement('div');
+                printDiv.style.position = "absolute";
+                printDiv.style.top = "0";
+                printDiv.style.left = "0";
+                printDiv.style.width = "1050px"; 
+                printDiv.style.padding = "30px";
+                printDiv.style.background = "#ffffff";
+                printDiv.style.color = "#000000";
+                printDiv.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+                printDiv.style.opacity = "0.01"; // <--- THIS IS THE MAGIC TRICK
+                printDiv.style.pointerEvents = "none";
+                printDiv.style.zIndex = "-9999";
+
+                let tableHTML = `
+                <div style="border-bottom: 3px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h1 style="color: #1a237e; margin: 0; font-size: 26px;">Employee Attendance Report</h1>
+                        <p style="margin: 5px 0 0 0; font-size: 15px; font-weight: bold; color: #333;">Month: ${monthNameStr}</p>
                     </div>
-                    
-                    <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: center; background-color: #ffffff;" border="1" bordercolor="#cccccc">
-                        <thead>
-                            <tr style="background-color: #1a237e; color: #ffffff; height: 35px;">
-                                <th style="width:12%; padding:6px;">Date</th>
-                                <th style="width:12%; padding:6px;">Status</th>
-                                <th style="width:10%; padding:6px;">In Time</th>
-                                <th style="width:10%; padding:6px;">Out Time</th>
-                                <th style="width:12%; padding:6px;">Break Time</th>
-                                <th style="width:12%; padding:6px;">Training Time</th>
-                                <th style="width:14%; padding:6px;">Admin Exception</th>
-                                <th style="width:18%; padding:6px;">Total Work Hrs</th>
-                            </tr>
-                        </thead>
-                        <tbody>`;
+                    <div style="text-align: right;">
+                        <p style="margin: 0; font-weight: bold; color: #333; font-size:14px;">Name: ${empName} (ID: ${id})</p>
+                        <p style="margin: 5px 0 0 0; font-size: 11px; color: #666;">Generated on: ${new Date().toLocaleString('en-IN')}</p>
+                    </div>
+                </div>
+                
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: center; background-color: #ffffff;" border="1" bordercolor="#cccccc">
+                    <thead>
+                        <tr style="background-color: #1a237e; color: #ffffff; height: 35px;">
+                            <th style="width:12%; padding:6px;">Date</th>
+                            <th style="width:12%; padding:6px;">Status</th>
+                            <th style="width:10%; padding:6px;">In Time</th>
+                            <th style="width:10%; padding:6px;">Out Time</th>
+                            <th style="width:12%; padding:6px;">Break Time</th>
+                            <th style="width:12%; padding:6px;">Training Time</th>
+                            <th style="width:14%; padding:6px;">Admin Exception</th>
+                            <th style="width:18%; padding:6px;">Total Work Hrs</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
 
                 let hasDataForMonth = false;
 
-                rawDatataArray.forEach(jsonStr => {
+                rawDataArray.forEach(jsonStr => {
                     try {
                         let emp = JSON.parse(jsonStr); if (!emp) return;
                         let dateToPrint = emp.recordDate || emp.date || "-";
@@ -479,8 +489,8 @@
                             
                             let excDisplay = excSecs > 0 ? `<span style="color:#0288D1; font-weight:bold;">+${formatTime(excSecs)}</span>` : `<span style="color:#999999;">-</span>`;
 
-                            htmlStringForPDF += `
-                            <tr style="height: 40px; page-break-inside: avoid;">
+                            tableHTML += `
+                            <tr style="height: 40px; background-color: #ffffff; page-break-inside: avoid;">
                                 <td style="font-weight: bold; color: #000000; padding:6px;">${dateToPrint}</td>
                                 <td style="font-weight: bold; color: ${statusText === 'Present' ? '#2E7D32' : '#C62828'}; padding:6px;">${statusText}</td>
                                 <td style="color: #000000; padding:6px;">${emp.inTime}</td>
@@ -494,33 +504,41 @@
                     } catch(e) {}
                 });
 
-                htmlStringForPDF += `</tbody></table>
+                tableHTML += `</tbody></table>
                 <div style="margin-top: 20px; font-size: 11px; color: #777777; text-align: center;">
                     * This is an automated system generated report for ${monthNameStr}. Contact System Administrator for discrepancies.
-                </div>
                 </div>`;
 
                 if(!hasDataForMonth) {
                     return alert(`No attendance records found for ${monthNameStr}.`);
                 }
 
-                // ab element.appendChild ki jagah sidha STRING ko generate karwa rahe hain
+                printDiv.innerHTML = tableHTML;
+                document.body.appendChild(printDiv);
+
                 let opt = {
                     margin: [0.3, 0.3, 0.3, 0.3], 
                     filename: `Report_${id}_${monthNameStr.replace(' ', '_')}.pdf`,
                     image: { type: 'jpeg', quality: 0.98 }, 
-                    html2canvas: { scale: 2, useCORS: true, logging: false }, 
+                    html2canvas: { scale: 2, useCORS: true, logging: false, windowWidth: 1050 }, 
                     jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' },
                     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
                 };
 
-                html2pdf().set(opt).from(htmlStringForPDF).save().then(() => {
-                    alert("✅ Report downloaded successfully.");
-                }).catch(err => {
-                    alert("Error generating PDF. Please try again.");
-                });
+                // Time delay so mobile browser paints it
+                setTimeout(() => {
+                    html2pdf().set(opt).from(printDiv).save().then(() => {
+                        document.body.removeChild(printDiv);
+                        alert("✅ Report downloaded successfully.");
+                    }).catch(err => {
+                        document.body.removeChild(printDiv);
+                        alert("Error generating PDF: " + err);
+                    });
+                }, 500);
 
-            } catch(e) { alert("Failed to fetch data from the server."); }
+            } catch(e) { 
+                alert("Error: " + e.message); 
+            }
         }
 
         async function updateSystemPasswords() {
@@ -534,4 +552,4 @@
         }
     </script>
 </body>
-</html>                                                         
+</html>                                                                                               
