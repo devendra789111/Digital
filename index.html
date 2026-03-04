@@ -399,12 +399,11 @@
             } catch(e) { alert("Failed to add exception."); searchEmployee(); }
         }
 
-        // --- PROFESSIONAL PDF DOWNLOAD (FIXED LAYOUT & ADDED TRAINING TIME) ---
+        // --- PROFESSIONAL BLANK-FREE PDF FIX ---
         async function downloadEmpPDF() {
             let id = document.getElementById("searchId").value;
             if(!id) return alert("Please search an Employee ID first.");
 
-            // Professional English Alert
             alert("⏳ Generating PDF report... Please wait."); 
             
             try {
@@ -415,16 +414,17 @@
                 
                 let empName = EMP_LIST[id] ? EMP_LIST[id].name : "Unknown";
                 
+                // नया टेबल डिव (सिर्फ PDF के लिए)
                 let tempDiv = document.createElement('div');
-                // PDF कटने की समस्या को रोकने के लिए सटीक CSS 
-                tempDiv.style.width = "1050px"; 
+                tempDiv.style.width = "1000px"; 
                 tempDiv.style.padding = "30px";
                 tempDiv.style.background = "white";
                 tempDiv.style.fontFamily = "'Segoe UI', Arial, sans-serif";
-                tempDiv.style.position = "absolute";
+                
+                // Hide Div but don't use absolute/z-index to avoid blank PDF
+                tempDiv.style.position = "fixed";
+                tempDiv.style.top = "-9999px"; 
                 tempDiv.style.left = "0";
-                tempDiv.style.top = "0";
-                tempDiv.style.zIndex = "-999";
 
                 let tableHTML = `
                 <div style="border-bottom: 3px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
@@ -477,7 +477,8 @@
                             <td>${emp.inTime}</td>
                             <td>${emp.outTime}</td>
                             <td>${formatTime(emp.breakSecs)}</td>
-                            <td>${formatTime(emp.trainSecs)}</td> <td style="background-color: #f1f8e9;">${excDisplay}</td>
+                            <td>${formatTime(emp.trainSecs)}</td>
+                            <td style="background-color: #f1f8e9;">${excDisplay}</td>
                             <td style="font-weight:bold; color:${wColor};">${formatTime(totalWorkSecs)}</td>
                         </tr>`;
                     } catch(e) {}
@@ -491,18 +492,18 @@
                 tempDiv.innerHTML = tableHTML;
                 document.body.appendChild(tempDiv);
 
+                // 'windowWidth: 1200' prevents the left-side cropping
                 let opt = {
-                    margin: [0.3, 0.3, 0.3, 0.3],
+                    margin: [0.4, 0.4, 0.4, 0.4],
                     filename: `Attendance_Report_${id}.pdf`,
                     image: { type: 'jpeg', quality: 1.0 }, 
-                    html2canvas: { scale: 3, useCORS: true, logging: false }, 
+                    html2canvas: { scale: 3, useCORS: true, logging: false, windowWidth: 1200 }, 
                     jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }, 
                     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
                 };
 
                 html2pdf().set(opt).from(tempDiv).save().then(() => {
                     document.body.removeChild(tempDiv);
-                    // Professional Success Alert
                     alert("✅ Report downloaded successfully.");
                 });
 
@@ -520,4 +521,4 @@
         }
     </script>
 </body>
-</html>                                                                        
+</html>                                            
