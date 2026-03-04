@@ -153,7 +153,7 @@
         </div>
     </div>
 
-           <script>
+              <script>
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         // ध्यान दें: यहाँ अपना नया SCRIPT_URL पेस्ट करें
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -201,8 +201,30 @@
             } catch(e) { document.getElementById("empLoadingMsg").innerText = "Error: Failed to fetch data. Check URL."; }
         }
 
-        async function registerEmployee() { /* Registration Logic Unchanged */ }
-        async function deactivateEmp(id) { /* Deactivate Logic Unchanged */ }
+        async function registerEmployee() {
+            let name = document.getElementById('regName').value.trim();
+            let mobile = document.getElementById('regMobile').value.trim();
+            let aadhar = document.getElementById('regAadhar').value.trim();
+            let joinDate = document.getElementById('regJoinDate').value;
+
+            if(!name || !mobile || !aadhar || !joinDate) return alert("Please fill all details!");
+            if(mobile.length < 10 || aadhar.length < 12) return alert("Enter valid Mobile and Aadhar number!");
+
+            document.getElementById('empTableBody').innerHTML = `<tr><td colspan="6">Registering... Please wait!</td></tr>`;
+            try {
+                let res = await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "addEmployee", name: name, mobile: mobile, aadhar: aadhar, joinDate: joinDate }) });
+                let data = await res.json();
+                alert(`✅ Registration Successful!\nNew Employee ID is: ${data.newId}`);
+                document.getElementById('regName').value = ""; document.getElementById('regMobile').value = ""; document.getElementById('regAadhar').value = ""; document.getElementById('regJoinDate').value = "";
+                fetchEmployees(); 
+            } catch(e) { alert("Registration failed. Check connection."); }
+        }
+
+        async function deactivateEmp(id) {
+            if(!confirm(`Are you sure you want to Deactivate Employee ID: ${id}?`)) return;
+            await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "deactivateEmployee", id: id }) });
+            alert("Employee Deactivated!"); fetchEmployees();
+        }
 
         async function loadLiveStatus() {
             let today = new Date();
@@ -253,7 +275,11 @@
             loadLiveStatus();
         }
 
-        async function forceCommand(id, type) { /* Stop Train Logic */ }
+        async function forceCommand(id, type) {
+            if(!confirm("Are you sure you want to stop their training remotely?")) return;
+            await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "forceAction", id: id, forceType: type }) });
+            alert("Command Sent!"); loadLiveStatus();
+        }
 
         async function loadLeaves(filterStatus = 'Pending') {
             document.getElementById('leaveTableTitle').innerText = `Showing: ${filterStatus} Requests`;
@@ -283,7 +309,6 @@
             alert(`Leave ${status} successfully!`); loadLeaves('Pending'); 
         }
 
-        // --- SEARCH & EXCEPTION SYSTEM ---
         async function searchEmployee() {
             let id = document.getElementById("searchId").value;
             if(!id) return alert("Please enter Employee ID!");
@@ -374,12 +399,12 @@
             } catch(e) { alert("Failed to add exception."); searchEmployee(); }
         }
 
-        // --- HIGH QUALITY PDF DOWNLOAD FOR ADMIN (FIXED LAYOUT) ---
+        // --- FULL HD PDF DOWNLOAD (NO PHOTOS FOR ADMIN) ---
         async function downloadEmpPDF() {
             let id = document.getElementById("searchId").value;
             if(!id) return alert("Please Search an Employee ID first!");
 
-            alert("⏳ जनरेट हो रहा है... कृपया इंतज़ार करें।");
+            alert("⏳ Full HD PDF जनरेट हो रही है... कृपया इंतज़ार करें।");
             
             try {
                 let res = await fetch(`${SCRIPT_URL}?action=getEmpData&id=${id}&nocache=${Date.now()}`);
@@ -389,25 +414,24 @@
                 
                 let empName = EMP_LIST[id] ? EMP_LIST[id].name : "Unknown";
                 
-                // PDF के लिए परफेक्ट रेस्पॉन्सिव डिज़ाइन (जिससे कुछ कटेगा नहीं)
                 let tempDiv = document.createElement('div');
-                tempDiv.style.width = "100%"; 
-                tempDiv.style.padding = "20px";
+                tempDiv.style.width = "1000px"; 
+                tempDiv.style.padding = "30px";
                 tempDiv.style.background = "white";
                 tempDiv.style.fontFamily = "'Segoe UI', Arial, sans-serif";
 
                 let tableHTML = `
                 <div style="border-bottom: 3px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-                    <h1 style="color: #1a237e; margin: 0; font-size: 24px;">Employee Attendance Report</h1>
+                    <h1 style="color: #1a237e; margin: 0; font-size: 26px;">Employee Attendance Report</h1>
                     <div style="text-align: right;">
-                        <p style="margin: 0; font-weight: bold; color: #333;">Name: ${empName} (ID: ${id})</p>
-                        <p style="margin: 0; font-size: 12px; color: #666;">Generated on: ${new Date().toLocaleString('hi-IN')}</p>
+                        <p style="margin: 0; font-weight: bold; color: #333; font-size:14px;">Name: ${empName} (ID: ${id})</p>
+                        <p style="margin: 0; font-size: 11px; color: #666;">Generated on: ${new Date().toLocaleString('hi-IN')}</p>
                     </div>
                 </div>
                 
-                <table style="width:100%; border-collapse: collapse; font-size: 11px; text-align:center;" border="1" bordercolor="#ddd">
+                <table style="width:100%; border-collapse: collapse; font-size: 13px; text-align:center;" border="1" bordercolor="#ddd">
                     <thead>
-                        <tr style="background-color:#1a237e; color:white; height: 30px;">
+                        <tr style="background-color:#1a237e; color:white; height: 40px;">
                             <th>Date</th>
                             <th>Status</th>
                             <th>In Time</th>
@@ -415,8 +439,6 @@
                             <th>Break Time</th>
                             <th>Admin Exception</th>
                             <th>Total Work Hrs</th>
-                            <th>Selfie In</th>
-                            <th>Selfie Out</th>
                         </tr>
                     </thead>
                     <tbody>`;
@@ -439,50 +461,58 @@
                         let dateToPrint = emp.recordDate || emp.date || "-";
                         
                         let excDisplay = excSecs > 0 
-                            ? `<span style="color:#0288D1; font-weight:bold; font-size:12px;">+${formatTime(excSecs)}</span>` 
+                            ? `<span style="color:#0288D1; font-weight:bold;">+${formatTime(excSecs)}</span>` 
                             : `<span style="color:#999;">-</span>`;
 
-                        let pIn = emp.photoIn ? `<img src="${emp.photoIn}" style="width:40px; height:40px; border-radius:4px; object-fit:cover; border: 1px solid #ccc;">` : '-';
-                        let pOut = emp.photoOut ? `<img src="${emp.photoOut}" style="width:40px; height:40px; border-radius:4px; object-fit:cover; border: 1px solid #ccc;">` : '-';
-
+                        // Selfie In/Out Removed from Admin PDF as requested
                         tableHTML += `
-                        <tr style="height: 50px;">
+                        <tr style="height: 45px;">
                             <td style="font-weight: bold;">${dateToPrint}</td>
                             <td style="font-weight: bold; color: ${statusText === 'Present' ? '#2E7D32' : '#C62828'}">${statusText}</td>
                             <td>${emp.inTime}</td>
                             <td>${emp.outTime}</td>
                             <td>${formatTime(emp.breakSecs)}</td>
                             <td style="background-color: #f1f8e9;">${excDisplay}</td>
-                            <td style="font-weight:bold; color:${wColor}; font-size: 12px;">${formatTime(totalWorkSecs)}</td>
-                            <td>${pIn}</td>
-                            <td>${pOut}</td>
+                            <td style="font-weight:bold; color:${wColor}; font-size: 14px;">${formatTime(totalWorkSecs)}</td>
                         </tr>`;
                     } catch(e) {}
                 });
 
-                tableHTML += `</tbody></table>`;
+                tableHTML += `</tbody></table>
+                <div style="margin-top: 20px; font-size: 11px; color: #777; text-align: center;">
+                    * This is an automated admin document. Contact System Administrator for discrepancies.
+                </div>`;
+
                 tempDiv.innerHTML = tableHTML;
                 document.body.appendChild(tempDiv);
 
-                // Viewport Window Width (1200) सेट किया गया है ताकि PDF कभी एक साइड में न भागे
+                // SCALE: 4 SET KIYA GAYA HAI (FOR FULL HD RAZOR SHARP QUALITY)
                 let opt = {
-                    margin: [0.3, 0.3, 0.3, 0.3],
+                    margin: [0.5, 0.5, 0.5, 0.5],
                     filename: `Admin_Report_${id}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false, windowWidth: 1200 },
-                    jsPDF: { unit: 'in', format: 'a3', orientation: 'landscape' },
+                    image: { type: 'jpeg', quality: 1.0 }, // 100% Image Quality
+                    html2canvas: { scale: 4, useCORS: true, logging: false, windowWidth: 1000 },
+                    jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }, // A4 Landscape
                     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
                 };
 
                 html2pdf().set(opt).from(tempDiv).save().then(() => {
                     document.body.removeChild(tempDiv);
-                    alert("✅ PDF सफलतापूर्वक डाउनलोड हो गई है।");
+                    alert("✅ Full HD PDF सफलतापूर्वक डाउनलोड हो गई है।");
                 });
 
             } catch(e) { alert("सर्वर से डेटा लाने में समस्या आई।"); }
         }
 
-        async function updateSystemPasswords() { /* Pass Logic Unchanged */ }
-    </script>                                                                  
+        async function updateSystemPasswords() {
+            let aPass = document.getElementById("newAdminPass").value; let tPass = document.getElementById("newTrainPass").value;
+            if(!aPass && !tPass) return alert("Enter at least one password!");
+            document.getElementById("passMsg").innerText = "Updating... Please wait.";
+            await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "updatePasswords", adminPass: aPass, trainPass: tPass }) });
+            document.getElementById("passMsg").innerText = "✅ Passwords updated successfully!";
+            setTimeout(() => document.getElementById("passMsg").innerText = "", 3000);
+            document.getElementById("newAdminPass").value = ""; document.getElementById("newTrainPass").value = "";
+        }
+    </script>
 </body>
-</html>
+</html>                                                                 
