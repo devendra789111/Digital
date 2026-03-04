@@ -226,7 +226,7 @@
             alert("Employee Deactivated!"); fetchEmployees();
         }
 
-        // --- LIVE STATUS (WITH ADMIN PUNCH OUT) ---
+        // --- LIVE STATUS ---
         async function loadLiveStatus() {
             let today = new Date();
             let dateStr = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`; 
@@ -343,6 +343,7 @@
                         let isLeaveOrOff = ["leave", "off", "holiday", "el", "cl", "sl", "lwp"].some(v => statusHtml.toLowerCase().includes(v));
 
                         if (!isLeaveOrOff && emp.mode !== "leave") {
+                            // Half Day Check
                             if (emp.isPunchedOut && totalWorkSecs <= 14400 && totalWorkSecs > 0) statusHtml = `<span style="color:red; font-weight:bold;">Half Day</span>`;
                             else statusHtml = `<span style="color:green; font-weight:bold;">Present</span>`;
                         } else {
@@ -390,7 +391,7 @@
             
             document.getElementById("exceptionModal").style.display = "none";
             let tbody = document.getElementById("searchTableBody");
-            tbody.innerHTML = `<tr><td colspan="10" style="color:green; font-weight:bold;">⏳ Granting Exception time... Please wait.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10" style="color:green; font-weight:bold;">⏳ Granting Exception time and recalculating... Please wait 2 seconds.</td></tr>`;
 
             try {
                 await fetch(SCRIPT_URL, { 
@@ -398,40 +399,123 @@
                     body: JSON.stringify({ action: "addException", id: currentExcId, date: currentExcDate, exceptionMins: mins }) 
                 });
                 alert(`✅ Successfully added ${mins} minutes exception!`);
-                searchEmployee(); 
+                
+                // Google Sheet को सेव करने का टाइम देना ज़रूरी है, इसलिए 2.5 सेकंड का डिले लगाया है
+                setTimeout(() => {
+                    searchEmployee(); 
+                }, 2500);
+
             } catch(e) { alert("Failed to add exception."); searchEmployee(); }
         }
 
-        // --- HIGH QUALITY PDF DOWNLOAD FOR ADMIN ---
-        function downloadEmpPDF() {
-            let element = document.getElementById('pdfArea'); 
-            let title = document.getElementById('pdfTitle'); 
-            let wrapper = document.getElementById('pdfTableWrapper');
+        // --- HIGH QUALITY PDF DOWNLOAD FOR ADMIN (MCKINSEY STYLE) ---
+        async function downloadEmpPDF() {
+            let id = document.getElementById("searchId").value;
+            if(!id) return alert("Please Search an Employee ID first!");
+
+            alert("⏳ जनरेट हो रहा है... कृपया इंतज़ार करें।");
             
-            // PDF बनाते समय बटन छिपा दें
-            let btns = element.querySelectorAll('.btn-exception'); 
-            btns.forEach(b => b.style.display = 'none');
-            
-            title.style.display = 'block'; 
-            wrapper.style.overflow = 'visible'; 
-            
-            // McKinsey Style Settings
-            let opt = { 
-                margin: [0.3, 0.3, 0.3, 0.3], 
-                filename: `Admin_Report_${document.getElementById("searchId").value}.pdf`, 
-                image: { type: 'jpeg', quality: 0.98 }, 
-                html2canvas: { scale: 2, useCORS: true, logging: false }, 
-                jsPDF: { unit: 'in', format: 'a3', orientation: 'landscape' },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } // इससे लाइन बीच में नहीं कटेगी
-            };
-            
-            html2pdf().set(opt).from(element).save().then(() => { 
-                title.style.display = 'none'; 
-                wrapper.style.overflow = 'auto'; 
-                // डाउनलोड होने के बाद बटन वापस दिखा दें
-                btns.forEach(b => b.style.display = 'inline-block'); 
-                alert("✅ PDF सफलतापूर्वक डाउनलोड हो गई है।");
-            });
+            try {
+                let res = await fetch(`${SCRIPT_URL}?action=getEmpData&id=${id}&nocache=${Date.now()}`);
+                let rawDataArray = await res.json();
+                
+                if(rawDataArray.length === 0) return alert("No records found to print.");
+                
+                let empName = EMP_LIST[id] ? EMP_LIST[id].name : "Unknown";
+                
+                let tempDiv = document.createElement('div');
+                tempDiv.style.width = "1100px"; 
+                tempDiv.style.padding = "40px";
+                tempDiv.style.background = "white";
+                tempDiv.style.fontFamily = "'Segoe UI', Arial, sans-serif";
+
+                let tableHTML = `
+                <div style="border-bottom: 3px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <h1 style="color: #1a237e; margin: 0; font-size: 28px;">Employee Attendance Report</h1>
+                    <div style="text-align: right;">
+                        <p style="margin: 0; font-weight: bold; color: #333;">Name: ${empName} (ID: ${id})</p>
+                        <p style="margin: 0; font-size: 12px; color: #666;">Generated on: ${new Date().toLocaleString('hi-IN')}</p>
+                    </div>
+                </div>
+                
+                <table style="width:100%; border-collapse: collapse; font-size: 11px; text-align:center; table-layout: fixed;" border="1" bordercolor="#ddd">
+                    <thead>
+                        <tr style="background-color:#1a237e; color:white; height: 35px;">
+                            <th style="width: 80px;">Date</th>
+                            <th style="width: 90px;">Status</th>
+                            <th style="width: 70px;">In Time</th>
+                            <th style="width: 70px;">Out Time</th>
+                            <th style="width: 70px;">Break Time</th>
+                            <th style="width: 80px;">Admin Exception</th>
+                            <th style="width: 90px;">Total Work Hrs</th>
+                            <th style="width: 60px;">Selfie In</th>
+                            <th style="width: 60px;">Selfie Out</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+                rawDataArray.forEach(jsonStr => {
+                    try {
+                        let emp = JSON.parse(jsonStr); if (!emp) return;
+                        let excSecs = emp.exceptionSecs || 0;
+                        let totalWorkSecs = (emp.workSecs || 0) + (emp.trainSecs || 0) + excSecs;
+                        
+                        let wColor = totalWorkSecs >= 28800 ? "#2E7D32" : (totalWorkSecs > 14400 ? "#E65100" : "#C62828");
+                        let statusText = emp.statusText || "Present";
+                        let isLeaveOrOff = ["leave", "off", "holiday", "el", "cl", "sl", "lwp"].some(v => statusText.toLowerCase().includes(v));
+
+                        if (!isLeaveOrOff && emp.mode !== "leave") {
+                            if (emp.isPunchedOut && totalWorkSecs <= 14400 && totalWorkSecs > 0) statusText = "Half Day";
+                          else statusText = "Present";
+                        }
+
+                        let dateToPrint = emp.recordDate || emp.date || "-";
+                        
+                        let excDisplay = excSecs > 0 
+                            ? `<span style="color:#0288D1; font-weight:bold; font-size:12px;">+${formatTime(excSecs)}</span>` 
+                            : `<span style="color:#999;">-</span>`;
+
+                        let pIn = emp.photoIn ? `<img src="${emp.photoIn}" style="width:45px; height:45px; border-radius:4px; object-fit:cover; border: 1px solid #ccc;">` : '-';
+                        let pOut = emp.photoOut ? `<img src="${emp.photoOut}" style="width:45px; height:45px; border-radius:4px; object-fit:cover; border: 1px solid #ccc;">` : '-';
+
+                        tableHTML += `
+                        <tr style="height: 55px;">
+                            <td style="font-weight: bold;">${dateToPrint}</td>
+                            <td style="font-weight: bold; color: ${statusText === 'Present' ? '#2E7D32' : '#C62828'}">${statusText}</td>
+                            <td>${emp.inTime}</td>
+                            <td>${emp.outTime}</td>
+                            <td>${formatTime(emp.breakSecs)}</td>
+                            <td style="background-color: #f1f8e9;">${excDisplay}</td>
+                            <td style="font-weight:bold; color:${wColor}; font-size: 13px;">${formatTime(totalWorkSecs)}</td>
+                            <td>${pIn}</td>
+                            <td>${pOut}</td>
+                        </tr>`;
+                    } catch(e) {}
+                });
+
+                tableHTML += `</tbody></table>
+                <div style="margin-top: 20px; font-size: 10px; color: #777; text-align: center;">
+                    * This is a computer generated document. In case of discrepancies, contact HR.
+                </div>`;
+
+                tempDiv.innerHTML = tableHTML;
+                document.body.appendChild(tempDiv);
+
+                let opt = {
+                    margin: [0.3, 0.3, 0.3, 0.3],
+                    filename: `Admin_Report_${id}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, logging: false },
+                    jsPDF: { unit: 'in', format: 'a3', orientation: 'landscape' },
+                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
+                };
+
+                html2pdf().set(opt).from(tempDiv).save().then(() => {
+                    document.body.removeChild(tempDiv);
+                    alert("✅ PDF सफलतापूर्वक डाउनलोड हो गई है।");
+                });
+
+            } catch(e) { alert("सर्वर से डेटा लाने में समस्या आई।"); }
         }
 
         async function updateSystemPasswords() {
@@ -443,6 +527,6 @@
             setTimeout(() => document.getElementById("passMsg").innerText = "", 3000);
             document.getElementById("newAdminPass").value = ""; document.getElementById("newTrainPass").value = "";
         }
-    </script>
+    </script>                                             
 </body>
 </html>
