@@ -155,7 +155,7 @@
 
              <script>
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        // ध्यान दें: यहाँ अपना नया SCRIPT_URL पेस्ट करें
+        // ध्यान दें: यहाँ अपना Google Script SCRIPT_URL पेस्ट करें
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw4QGYfqyPKpATDwqaFI9eArrH82GuqWBV7_q3PUbl1QiqcaD77wLt1HzojcouT--18Eg/exec";
 
@@ -399,130 +399,86 @@
             } catch(e) { alert("Failed to add exception."); searchEmployee(); }
         }
 
-        // --- 100% BULLETPROOF OPACITY TRICK FOR MOBILE PDF ---
-    async function downloadEmpPDF() {
-    let id = document.getElementById("searchId").value;
-    if(!id) return alert("Please search an Employee ID first.");
+        // --- BLANK PDF FIX (Admin App) ---
+        async function downloadEmpPDF() {
+            let id = document.getElementById("searchId").value;
+            if(!id) return alert("Please search an Employee ID first.");
 
-    let choice = prompt("Which month's report do you want to download?\n1 = Current Month\n2 = Last Month", "1");
-    if (choice !== "1" && choice !== "2") return alert("Download cancelled.");
+            let choice = prompt("Which month's report do you want to download?\n1 = Current Month\n2 = Last Month", "1");
+            if (choice !== "1" && choice !== "2") return alert("Download cancelled.");
 
-    alert("⏳ Generating PDF report... Please wait."); 
-    
-    try {
-        let res = await fetch(`${SCRIPT_URL}?action=getEmpData&id=${id}&nocache=${Date.now()}`);
-        let rawDataArray = await res.json();
-        
-        if(rawDataArray.length === 0) return alert("No records found to export.");
-
-        let targetDate = new Date();
-        if (choice === "2") targetDate.setMonth(targetDate.getMonth() - 1);
-        let t_mm = String(targetDate.getMonth() + 1).padStart(2, '0');
-        let t_yyyy = targetDate.getFullYear();
-        let targetSuffix = `${t_mm}/${t_yyyy}`;
-        let monthNameStr = targetDate.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
-        
-        let empName = EMP_LIST[id] ? EMP_LIST[id].name : "Unknown";
-        
-        let tableHTML = `
-        <div style="background: #ffffff; padding: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #000000; width: 1050px;">
-            <div style="border-bottom: 3px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h1 style="color: #1a237e; margin: 0; font-size: 26px;">Employee Attendance Report</h1>
-                    <p style="margin: 5px 0 0 0; font-size: 15px; font-weight: bold; color: #333;">Month: ${monthNameStr}</p>
-                </div>
-                <div style="text-align: right;">
-                    <p style="margin: 0; font-weight: bold; color: #333; font-size:14px;">Name: ${empName} (ID: ${id})</p>
-                    <p style="margin: 5px 0 0 0; font-size: 11px; color: #666;">Generated on: ${new Date().toLocaleString('en-IN')}</p>
-                </div>
-            </div>
+            alert("⏳ Generating PDF report... Please wait."); 
             
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: center; background-color: #ffffff;" border="1" bordercolor="#cccccc">
-                <thead>
-                    <tr style="background-color: #1a237e; color: #ffffff; height: 35px;">
-                        <th style="width:12%; padding:6px;">Date</th>
-                        <th style="width:12%; padding:6px;">Status</th>
-                        <th style="width:10%; padding:6px;">In Time</th>
-                        <th style="width:10%; padding:6px;">Out Time</th>
-                        <th style="width:12%; padding:6px;">Break Time</th>
-                        <th style="width:12%; padding:6px;">Training Time</th>
-                        <th style="width:14%; padding:6px;">Admin Exception</th>
-                        <th style="width:18%; padding:6px;">Total Work Hrs</th>
-                    </tr>
-                </thead>
-                <tbody>`;
-
-        let hasDataForMonth = false;
-
-        rawDataArray.forEach(jsonStr => {
             try {
-                let emp = JSON.parse(jsonStr); if (!emp) return;
-                let dateToPrint = emp.recordDate || emp.date || "-";
+                let res = await fetch(`${SCRIPT_URL}?action=getEmpData&id=${id}&nocache=${Date.now()}`);
+                let rawDataArray = await res.json();
                 
-                if(dateToPrint.endsWith(targetSuffix)) {
-                    hasDataForMonth = true;
+                if(rawDataArray.length === 0) return alert("No records found to export.");
+
+                let targetDate = new Date();
+                if (choice === "2") targetDate.setMonth(targetDate.getMonth() - 1);
+                let t_mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+                let t_yyyy = targetDate.getFullYear();
+                let targetSuffix = `${t_mm}/${t_yyyy}`;
+                let monthNameStr = targetDate.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+                
+                let empName = EMP_LIST[id] ? EMP_LIST[id].name : "Unknown";
+                
+                let printContainer = document.createElement('div');
+                printContainer.style.position = "absolute";
+                printContainer.style.left = "-99999px"; // स्क्रीन से बहुत दूर
+                printContainer.style.top = "0";
+                
+                let tableHTML = `
+                <div style="width: 1050px; background: #ffffff; padding: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #000000;">
+                    <div style="border-bottom: 3px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h1 style="color: #1a237e; margin: 0; font-size: 26px;">Employee Attendance Report</h1>
+                            <p style="margin: 5px 0 0 0; font-size: 15px; font-weight: bold; color: #333;">Month: ${monthNameStr}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="margin: 0; font-weight: bold; color: #333; font-size:14px;">Name: ${empName} (ID: ${id})</p>
+                            <p style="margin: 5px 0 0 0; font-size: 11px; color: #666;">Generated on: ${new Date().toLocaleString('en-IN')}</p>
+                        </div>
+                    </div>
                     
-                    let excSecs = emp.exceptionSecs || 0;
-                    let totalWorkSecs = (emp.workSecs || 0) + (emp.trainSecs || 0) + excSecs;
-                    
-                    let wColor = totalWorkSecs >= 28800 ? "#2E7D32" : (totalWorkSecs > 14400 ? "#E65100" : "#C62828");
-                    let statusText = emp.statusText || "Present";
-                    let isLeaveOrOff = ["leave", "off", "holiday", "el", "cl", "sl", "lwp"].some(v => statusText.toLowerCase().includes(v));
+                    <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: center; background-color: #ffffff;" border="1" bordercolor="#cccccc">
+                        <thead>
+                            <tr style="background-color: #1a237e; color: #ffffff; height: 35px;">
+                                <th style="width:12%; padding:6px;">Date</th>
+                                <th style="width:12%; padding:6px;">Status</th>
+                                <th style="width:10%; padding:6px;">In Time</th>
+                                <th style="width:10%; padding:6px;">Out Time</th>
+                                <th style="width:12%; padding:6px;">Break Time</th>
+                                <th style="width:12%; padding:6px;">Training Time</th>
+                                <th style="width:14%; padding:6px;">Admin Exception</th>
+                                <th style="width:18%; padding:6px;">Total Work Hrs</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
 
-                    if (!isLeaveOrOff && emp.mode !== "leave") {
-                        if (emp.isPunchedOut && totalWorkSecs <= 14400 && totalWorkSecs > 0) statusText = "Half Day";
-                        else statusText = "Present";
-                    }
-                    
-                    let excDisplay = excSecs > 0 ? `<span style="color:#0288D1; font-weight:bold;">+${formatTime(excSecs)}</span>` : `<span style="color:#999999;">-</span>`;
+                let hasDataForMonth = false;
 
-                    tableHTML += `
-                    <tr style="height: 40px; background-color: #ffffff; page-break-inside: avoid;">
-                        <td style="font-weight: bold; color: #000000; padding:6px;">${dateToPrint}</td>
-                        <td style="font-weight: bold; color: ${statusText === 'Present' ? '#2E7D32' : '#C62828'}; padding:6px;">${statusText}</td>
-                        <td style="color: #000000; padding:6px;">${emp.inTime}</td>
-                        <td style="color: #000000; padding:6px;">${emp.outTime}</td>
-                        <td style="color: #000000; padding:6px;">${formatTime(emp.breakSecs)}</td>
-                        <td style="color: #000000; padding:6px;">${formatTime(emp.trainSecs)}</td>
-                        <td style="background-color: #f1f8e9; color: #000000; padding:6px;">${excDisplay}</td>
-                        <td style="font-weight:bold; color:${wColor}; padding:6px;">${formatTime(totalWorkSecs)}</td>
-                    </tr>`;
-                }
-            } catch(e) {}
-        });
+              rawDataArray.forEach(jsonStr => {
+                    try {
+                        let emp = JSON.parse(jsonStr); if (!emp) return;
+                        let dateToPrint = emp.recordDate || emp.date || "-";
+                        
+                        if(dateToPrint.endsWith(targetSuffix)) {
+                            hasDataForMonth = true;
+                            
+                            let excSecs = emp.exceptionSecs || 0;
+                            let totalWorkSecs = (emp.workSecs || 0) + (emp.trainSecs || 0) + excSecs;
+                            
+                            let wColor = totalWorkSecs >= 28800 ? "#2E7D32" : (totalWorkSecs > 14400 ? "#E65100" : "#C62828");
+                            let statusText = emp.statusText || "Present";
+                            let isLeaveOrOff = ["leave", "off", "holiday", "el", "cl", "sl", "lwp"].some(v => statusText.toLowerCase().includes(v));
 
-        tableHTML += `</tbody></table>
-        <div style="margin-top: 20px; font-size: 11px; color: #777777; text-align: center;">
-            * This is an automated system generated report for ${monthNameStr}. Contact System Administrator for discrepancies.
-        </div>
-        </div>`;
-
-        if(!hasDataForMonth) {
-            return alert(`No attendance records found for ${monthNameStr}.`);
-        }
-
-        let opt = {
-            margin: [0.3, 0.3, 0.3, 0.3], 
-            filename: `Report_${id}_${monthNameStr.replace(' ', '_')}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 }, 
-            html2canvas: { scale: 2, useCORS: true, logging: false }, 
-            jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
-        };
-
-        setTimeout(() => {
-            html2pdf().set(opt).from(tableHTML).save().then(() => {
-                alert("✅ Report downloaded successfully.");
-            }).catch(err => {
-                alert("Error generating PDF: " + err);
-            });
-        }, 500);
-
-    } catch(e) { 
-        alert("Error: " + e.message); 
-    }
-}
-                                             
+                            if (!isLeaveOrOff && emp.mode !== "leave") {
+                                if (emp.isPunchedOut && totalWorkSecs <= 14400 && totalWorkSecs > 0) statusText = "Half Day";
+                                else statusText = "Present";
+                            }
+                            
                             let excDisplay = excSecs > 0 ? `<span style="color:#0288D1; font-weight:bold;">+${formatTime(excSecs)}</span>` : `<span style="color:#999999;">-</span>`;
 
                             tableHTML += `
@@ -543,14 +499,15 @@
                 tableHTML += `</tbody></table>
                 <div style="margin-top: 20px; font-size: 11px; color: #777777; text-align: center;">
                     * This is an automated system generated report for ${monthNameStr}. Contact System Administrator for discrepancies.
-                </div>`;
+                </div>
+                </div>`; // Main wrapper close
 
                 if(!hasDataForMonth) {
                     return alert(`No attendance records found for ${monthNameStr}.`);
                 }
 
-                printDiv.innerHTML = tableHTML;
-                document.body.appendChild(printDiv);
+                printContainer.innerHTML = tableHTML;
+                document.body.appendChild(printContainer);
 
                 let opt = {
                     margin: [0.3, 0.3, 0.3, 0.3], 
@@ -561,13 +518,12 @@
                     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
                 };
 
-                // Time delay so mobile browser paints it
                 setTimeout(() => {
-                    html2pdf().set(opt).from(printDiv).save().then(() => {
-                        document.body.removeChild(printDiv);
+                    html2pdf().set(opt).from(printContainer).save().then(() => {
+                        document.body.removeChild(printContainer);
                         alert("✅ Report downloaded successfully.");
                     }).catch(err => {
-                        document.body.removeChild(printDiv);
+                        document.body.removeChild(printContainer);
                         alert("Error generating PDF: " + err);
                     });
                 }, 500);
@@ -586,6 +542,6 @@
             setTimeout(() => document.getElementById("passMsg").innerText = "", 3000);
             document.getElementById("newAdminPass").value = ""; document.getElementById("newTrainPass").value = "";
         }
-    </script>
+    </script>                                                                    
 </body>
 </html>                                                                                               
