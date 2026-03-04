@@ -207,8 +207,8 @@
             let aadhar = document.getElementById('regAadhar').value.trim();
             let joinDate = document.getElementById('regJoinDate').value;
 
-            if(!name || !mobile || !aadhar || !joinDate) return alert("Please fill all details!");
-            if(mobile.length < 10 || aadhar.length < 12) return alert("Enter valid Mobile and Aadhar number!");
+            if(!name || !mobile || !aadhar || !joinDate) return alert("Please fill all required details.");
+            if(mobile.length < 10 || aadhar.length < 12) return alert("Please enter valid Mobile and Aadhar numbers.");
 
             document.getElementById('empTableBody').innerHTML = `<tr><td colspan="6">Registering... Please wait!</td></tr>`;
             try {
@@ -217,13 +217,13 @@
                 alert(`✅ Registration Successful!\nNew Employee ID is: ${data.newId}`);
                 document.getElementById('regName').value = ""; document.getElementById('regMobile').value = ""; document.getElementById('regAadhar').value = ""; document.getElementById('regJoinDate').value = "";
                 fetchEmployees(); 
-            } catch(e) { alert("Registration failed. Check connection."); }
+            } catch(e) { alert("Registration failed. Please check your connection."); }
         }
 
         async function deactivateEmp(id) {
-            if(!confirm(`Are you sure you want to Deactivate Employee ID: ${id}?`)) return;
+            if(!confirm(`Are you sure you want to deactivate Employee ID: ${id}?`)) return;
             await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "deactivateEmployee", id: id }) });
-            alert("Employee Deactivated!"); fetchEmployees();
+            alert("Employee deactivated successfully."); fetchEmployees();
         }
 
         async function loadLiveStatus() {
@@ -262,8 +262,8 @@
         }
 
         async function adminPunchOut(id) {
-            if(!confirm(`क्या आप ${EMP_LIST[id].name} (${id}) को मैन्युअली 'Punch Out' करना चाहते हैं?`)) return;
-            let exactTime = new Date().toLocaleTimeString('hi-IN');
+            if(!confirm(`Are you sure you want to manually Punch Out ${EMP_LIST[id].name} (${id})?`)) return;
+            let exactTime = new Date().toLocaleTimeString('en-IN');
             let today = new Date();
             let dateStr = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`; 
             
@@ -271,14 +271,14 @@
                 method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify({ action: "adminPunchOut", id: id, date: dateStr, outTime: exactTime }) 
             });
-            alert("✅ Employee Punched Out Successfully!");
+            alert("✅ Employee punched out successfully.");
             loadLiveStatus();
         }
 
         async function forceCommand(id, type) {
-            if(!confirm("Are you sure you want to stop their training remotely?")) return;
+            if(!confirm("Are you sure you want to remotely stop their training?")) return;
             await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "forceAction", id: id, forceType: type }) });
-            alert("Command Sent!"); loadLiveStatus();
+            alert("Command sent successfully."); loadLiveStatus();
         }
 
         async function loadLeaves(filterStatus = 'Pending') {
@@ -304,17 +304,17 @@
         }
 
         async function updateLeave(reqId, status) {
-            if(!confirm(`Mark this leave as ${status}?`)) return;
+            if(!confirm(`Mark this leave request as ${status}?`)) return;
             await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "updateLeave", reqId: reqId, newStatus: status }) });
-            alert(`Leave ${status} successfully!`); loadLeaves('Pending'); 
+            alert(`Leave marked as ${status} successfully.`); loadLeaves('Pending'); 
         }
 
         async function searchEmployee() {
             let id = document.getElementById("searchId").value;
-            if(!id) return alert("Please enter Employee ID!");
+            if(!id) return alert("Please enter an Employee ID first.");
             let tbody = document.getElementById("searchTableBody");
             let excSumBox = document.getElementById("exceptionSummary");
-            tbody.innerHTML = `<tr><td colspan="10">Fetching exact data from Database...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10">Fetching database records...</td></tr>`;
             excSumBox.style.display = "none";
             
             try {
@@ -367,7 +367,7 @@
                 });
 
                 if(totalExceptionTime > 0) {
-                    excSumBox.innerHTML = `💡 इस कर्मचारी (ID: ${id}) को अब तक कुल <strong>${formatTime(totalExceptionTime)}</strong> की छूट (Admin Exception) दी गई है।`;
+                    excSumBox.innerHTML = `💡 Total Exception granted to this employee (ID: ${id}): <strong>${formatTime(totalExceptionTime)}</strong>.`;
                     excSumBox.style.display = "block";
                 }
             } catch(e) { tbody.innerHTML = `<tr><td colspan="10" style="color:red;">Error fetching data. Check connection.</td></tr>`; }
@@ -387,58 +387,64 @@
             
             document.getElementById("exceptionModal").style.display = "none";
             let tbody = document.getElementById("searchTableBody");
-            tbody.innerHTML = `<tr><td colspan="10" style="color:green; font-weight:bold;">⏳ Granting Exception time and recalculating... Please wait 2 seconds.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10" style="color:green; font-weight:bold;">⏳ Granting exception time... Please wait.</td></tr>`;
 
             try {
                 await fetch(SCRIPT_URL, { 
                     method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({ action: "addException", id: currentExcId, date: currentExcDate, exceptionMins: mins }) 
                 });
-                alert(`✅ Successfully added ${mins} minutes exception!`);
+                alert(`✅ Successfully added ${mins} minutes exception.`);
                 setTimeout(() => { searchEmployee(); }, 2500);
             } catch(e) { alert("Failed to add exception."); searchEmployee(); }
         }
 
-        // --- FULL HD PDF DOWNLOAD (NO PHOTOS FOR ADMIN) ---
+        // --- PROFESSIONAL PDF DOWNLOAD (FIXED LAYOUT & ADDED TRAINING TIME) ---
         async function downloadEmpPDF() {
             let id = document.getElementById("searchId").value;
-            if(!id) return alert("Please Search an Employee ID first!");
+            if(!id) return alert("Please search an Employee ID first.");
 
-            alert("⏳ Full HD PDF जनरेट हो रही है... कृपया इंतज़ार करें।");
+            // Professional English Alert
+            alert("⏳ Generating PDF report... Please wait."); 
             
             try {
                 let res = await fetch(`${SCRIPT_URL}?action=getEmpData&id=${id}&nocache=${Date.now()}`);
                 let rawDataArray = await res.json();
                 
-                if(rawDataArray.length === 0) return alert("No records found to print.");
+                if(rawDataArray.length === 0) return alert("No records found to export.");
                 
                 let empName = EMP_LIST[id] ? EMP_LIST[id].name : "Unknown";
                 
                 let tempDiv = document.createElement('div');
-                tempDiv.style.width = "1000px"; 
+                // PDF कटने की समस्या को रोकने के लिए सटीक CSS 
+                tempDiv.style.width = "1050px"; 
                 tempDiv.style.padding = "30px";
                 tempDiv.style.background = "white";
                 tempDiv.style.fontFamily = "'Segoe UI', Arial, sans-serif";
+                tempDiv.style.position = "absolute";
+                tempDiv.style.left = "0";
+                tempDiv.style.top = "0";
+                tempDiv.style.zIndex = "-999";
 
                 let tableHTML = `
                 <div style="border-bottom: 3px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
                     <h1 style="color: #1a237e; margin: 0; font-size: 26px;">Employee Attendance Report</h1>
                     <div style="text-align: right;">
                         <p style="margin: 0; font-weight: bold; color: #333; font-size:14px;">Name: ${empName} (ID: ${id})</p>
-                        <p style="margin: 0; font-size: 11px; color: #666;">Generated on: ${new Date().toLocaleString('hi-IN')}</p>
+                        <p style="margin: 0; font-size: 11px; color: #666;">Generated on: ${new Date().toLocaleString('en-IN')}</p>
                     </div>
                 </div>
                 
-                <table style="width:100%; border-collapse: collapse; font-size: 13px; text-align:center;" border="1" bordercolor="#ddd">
+                <table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:center;" border="1" bordercolor="#ccc">
                     <thead>
-                        <tr style="background-color:#1a237e; color:white; height: 40px;">
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>In Time</th>
-                            <th>Out Time</th>
-                            <th>Break Time</th>
-                            <th>Admin Exception</th>
-                            <th>Total Work Hrs</th>
+                        <tr style="background-color:#1a237e; color:white; height: 35px;">
+                            <th style="width:12%;">Date</th>
+                            <th style="width:12%;">Status</th>
+                            <th style="width:10%;">In Time</th>
+                            <th style="width:10%;">Out Time</th>
+                            <th style="width:12%;">Break Time</th>
+                            <th style="width:12%;">Training Time</th> <th style="width:14%;">Admin Exception</th>
+                            <th style="width:18%;">Total Work Hrs</th>
                         </tr>
                     </thead>
                     <tbody>`;
@@ -464,49 +470,48 @@
                             ? `<span style="color:#0288D1; font-weight:bold;">+${formatTime(excSecs)}</span>` 
                             : `<span style="color:#999;">-</span>`;
 
-                        // Selfie In/Out Removed from Admin PDF as requested
                         tableHTML += `
-                        <tr style="height: 45px;">
+                        <tr style="height: 40px;">
                             <td style="font-weight: bold;">${dateToPrint}</td>
                             <td style="font-weight: bold; color: ${statusText === 'Present' ? '#2E7D32' : '#C62828'}">${statusText}</td>
                             <td>${emp.inTime}</td>
                             <td>${emp.outTime}</td>
                             <td>${formatTime(emp.breakSecs)}</td>
-                            <td style="background-color: #f1f8e9;">${excDisplay}</td>
-                            <td style="font-weight:bold; color:${wColor}; font-size: 14px;">${formatTime(totalWorkSecs)}</td>
+                            <td>${formatTime(emp.trainSecs)}</td> <td style="background-color: #f1f8e9;">${excDisplay}</td>
+                            <td style="font-weight:bold; color:${wColor};">${formatTime(totalWorkSecs)}</td>
                         </tr>`;
                     } catch(e) {}
                 });
 
                 tableHTML += `</tbody></table>
                 <div style="margin-top: 20px; font-size: 11px; color: #777; text-align: center;">
-                    * This is an automated admin document. Contact System Administrator for discrepancies.
+                    * This is an automated system generated report. Contact System Administrator for discrepancies.
                 </div>`;
 
                 tempDiv.innerHTML = tableHTML;
                 document.body.appendChild(tempDiv);
 
-                // SCALE: 4 SET KIYA GAYA HAI (FOR FULL HD RAZOR SHARP QUALITY)
                 let opt = {
-                    margin: [0.5, 0.5, 0.5, 0.5],
-                    filename: `Admin_Report_${id}.pdf`,
-                    image: { type: 'jpeg', quality: 1.0 }, // 100% Image Quality
-                    html2canvas: { scale: 4, useCORS: true, logging: false, windowWidth: 1000 },
-                    jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }, // A4 Landscape
+                    margin: [0.3, 0.3, 0.3, 0.3],
+                    filename: `Attendance_Report_${id}.pdf`,
+                    image: { type: 'jpeg', quality: 1.0 }, 
+                    html2canvas: { scale: 3, useCORS: true, logging: false }, 
+                    jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }, 
                     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
                 };
 
                 html2pdf().set(opt).from(tempDiv).save().then(() => {
                     document.body.removeChild(tempDiv);
-                    alert("✅ Full HD PDF सफलतापूर्वक डाउनलोड हो गई है।");
+                    // Professional Success Alert
+                    alert("✅ Report downloaded successfully.");
                 });
 
-            } catch(e) { alert("सर्वर से डेटा लाने में समस्या आई।"); }
+            } catch(e) { alert("Failed to fetch data from the server."); }
         }
 
         async function updateSystemPasswords() {
             let aPass = document.getElementById("newAdminPass").value; let tPass = document.getElementById("newTrainPass").value;
-            if(!aPass && !tPass) return alert("Enter at least one password!");
+            if(!aPass && !tPass) return alert("Please enter at least one password to update.");
             document.getElementById("passMsg").innerText = "Updating... Please wait.";
             await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "updatePasswords", adminPass: aPass, trainPass: tPass }) });
             document.getElementById("passMsg").innerText = "✅ Passwords updated successfully!";
@@ -515,4 +520,4 @@
         }
     </script>
 </body>
-</html>                                                                 
+</html>                                                                        
