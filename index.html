@@ -399,12 +399,12 @@
             } catch(e) { alert("Failed to add exception."); searchEmployee(); }
         }
 
-        // --- 100% MOBILE-SAFE PDF DOWNLOAD ---
+        // --- 100% DEVICE COMPATIBLE REAL-DOM PDF GENERATION ---
         async function downloadEmpPDF() {
             let id = document.getElementById("searchId").value;
             if(!id) return alert("Please search an Employee ID first.");
 
-            alert("⏳ Generating PDF report... Please wait."); 
+            alert("⏳ Generating PDF report... Please wait. Do not close the window."); 
             
             try {
                 let res = await fetch(`${SCRIPT_URL}?action=getEmpData&id=${id}&nocache=${Date.now()}`);
@@ -414,30 +414,40 @@
                 
                 let empName = EMP_LIST[id] ? EMP_LIST[id].name : "Unknown";
                 
-                let finalHTMLString = `
-                <div style="width: 1000px; padding: 20px; background: white; font-family: 'Segoe UI', Arial, sans-serif; color: black;">
-                    <div style="border-bottom: 3px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-                        <h1 style="color: #1a237e; margin: 0; font-size: 26px;">Employee Attendance Report</h1>
-                        <div style="text-align: right;">
-                            <p style="margin: 0; font-weight: bold; color: #333; font-size:14px;">Name: ${empName} (ID: ${id})</p>
-                            <p style="margin: 0; font-size: 11px; color: #666;">Generated on: ${new Date().toLocaleString('en-IN')}</p>
-                        </div>
+                // Real DOM Element Create karna (Sabhi phone me kaam karne ke liye)
+                let tempDiv = document.createElement('div');
+                tempDiv.style.position = "absolute";
+                tempDiv.style.left = "-9999px"; // Screen ke bahar rakha hai taki dikhe nahi
+                tempDiv.style.top = "0";
+                tempDiv.style.width = "1000px"; // Fix Desktop Width
+                tempDiv.style.padding = "30px";
+                tempDiv.style.background = "white";
+                tempDiv.style.color = "black";
+                tempDiv.style.fontFamily = "'Segoe UI', Arial, sans-serif";
+
+                let tableHTML = `
+                <div style="border-bottom: 3px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <h1 style="color: #1a237e; margin: 0; font-size: 26px;">Employee Attendance Report</h1>
+                    <div style="text-align: right;">
+                        <p style="margin: 0; font-weight: bold; color: #333; font-size:14px;">Name: ${empName} (ID: ${id})</p>
+                        <p style="margin: 0; font-size: 11px; color: #666;">Generated on: ${new Date().toLocaleString('en-IN')}</p>
                     </div>
-                    
-                    <table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:center;" border="1" bordercolor="#ccc">
-                        <thead>
-                            <tr style="background-color:#1a237e; color:white; height: 35px;">
-                                <th style="width:12%; padding:5px;">Date</th>
-                                <th style="width:12%; padding:5px;">Status</th>
-                                <th style="width:10%; padding:5px;">In Time</th>
-                                <th style="width:10%; padding:5px;">Out Time</th>
-                                <th style="width:12%; padding:5px;">Break Time</th>
-                                <th style="width:12%; padding:5px;">Training Time</th>
-                                <th style="width:14%; padding:5px;">Admin Exception</th>
-                                <th style="width:18%; padding:5px;">Total Work Hrs</th>
-                            </tr>
-                        </thead>
-                        <tbody>`;
+                </div>
+                
+                <table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:center;" border="1" bordercolor="#ccc">
+                    <thead>
+                        <tr style="background-color:#1a237e; color:white; height: 35px;">
+                            <th style="width:12%; padding:5px;">Date</th>
+                            <th style="width:12%; padding:5px;">Status</th>
+                            <th style="width:10%; padding:5px;">In Time</th>
+                            <th style="width:10%; padding:5px;">Out Time</th>
+                            <th style="width:12%; padding:5px;">Break Time</th>
+                            <th style="width:12%; padding:5px;">Training Time</th>
+                            <th style="width:14%; padding:5px;">Admin Exception</th>
+                            <th style="width:18%; padding:5px;">Total Work Hrs</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
 
                 rawDataArray.forEach(jsonStr => {
                     try {
@@ -450,114 +460,7 @@
                         let isLeaveOrOff = ["leave", "off", "holiday", "el", "cl", "sl", "lwp"].some(v => statusText.toLowerCase().includes(v));
 
                         if (!isLeaveOrOff && emp.mode !== "leave") {
-                            if (emp.isPunchedOut && totalWorkSecs <= 14400 && totalWorkSecs > 0) statusText = "Half Day";
-                            else statusText = "Present";
-                        }
-
-                        let dateToPrint = emp.recordDate || emp.date || "-";
-                        
-                        let excHtml = excSecs > 0 ? `<span style="color:#0288D1; font-weight:bold; font-size:13px;">+${formatTime(excSecs)}</span>` : `<span style="color:#aaa;">-</span>`;
-                        if (!isLeaveOrOff && emp.isPunchedOut) {
-                            excHtml += `<br><button class="btn-exception" onclick="openExceptionModal('${emp.id}', '${dateToPrint}', '${emp.name}')">+ Add Exc</button>`;
-                        }
-
-                        let totalDisplay = `<span style="font-weight:bold; font-size:14px; color:${wColor};">${formatTime(totalWorkSecs)}</span>`;
-
-                        tbody.innerHTML += `<tr>
-                            <td>${dateToPrint}</td><td>${emp.id}</td><td>${emp.name}</td><td>${statusHtml}</td>
-                            <td>${emp.inTime}</td><td>${emp.outTime}</td>
-                            <td>${formatTime(emp.breakSecs)}</td><td>${formatTime(emp.trainSecs)}</td>
-                            <td style="background:#e1f5fe;">${excHtml}</td>
-                            <td>${totalDisplay}</td>
-                        </tr>`;
-                    } catch(e) {}
-                });
-
-                if(totalExceptionTime > 0) {
-                    excSumBox.innerHTML = `💡 Total Exception granted to this employee (ID: ${id}): <strong>${formatTime(totalExceptionTime)}</strong>.`;
-                    excSumBox.style.display = "block";
-                }
-            } catch(e) { tbody.innerHTML = `<tr><td colspan="10" style="color:red;">Error fetching data. Check connection.</td></tr>`; }
-        }
-
-        function openExceptionModal(id, date, name) {
-            currentExcId = id; currentExcDate = date;
-            document.getElementById("excEmpInfo").innerHTML = `<b>Employee:</b> ${name} (${id})<br><b>Date:</b> ${date}`;
-            document.getElementById("excMinutes").value = "";
-            document.getElementById("exceptionModal").style.display = "flex";
-        }
-        function closeExceptionModal() { document.getElementById("exceptionModal").style.display = "none"; }
-
-        async function submitException() {
-            let mins = document.getElementById("excMinutes").value;
-            if(!mins || mins <= 0) return alert("Please enter valid minutes.");
-            
-            document.getElementById("exceptionModal").style.display = "none";
-            let tbody = document.getElementById("searchTableBody");
-            tbody.innerHTML = `<tr><td colspan="10" style="color:green; font-weight:bold;">⏳ Granting exception time... Please wait.</td></tr>`;
-
-            try {
-                await fetch(SCRIPT_URL, { 
-                    method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ action: "addException", id: currentExcId, date: currentExcDate, exceptionMins: mins }) 
-                });
-                alert(`✅ Successfully added ${mins} minutes exception.`);
-                setTimeout(() => { searchEmployee(); }, 2500);
-            } catch(e) { alert("Failed to add exception."); searchEmployee(); }
-        }
-
-        // --- 100% MOBILE-SAFE PDF DOWNLOAD ---
-        async function downloadEmpPDF() {
-            let id = document.getElementById("searchId").value;
-            if(!id) return alert("Please search an Employee ID first.");
-
-            alert("⏳ Generating PDF report... Please wait."); 
-            
-            try {
-                let res = await fetch(`${SCRIPT_URL}?action=getEmpData&id=${id}&nocache=${Date.now()}`);
-                let rawDataArray = await res.json();
-                
-                if(rawDataArray.length === 0) return alert("No records found to export.");
-                
-                let empName = EMP_LIST[id] ? EMP_LIST[id].name : "Unknown";
-                
-                let finalHTMLString = `
-                <div style="width: 1000px; padding: 20px; background: white; font-family: 'Segoe UI', Arial, sans-serif; color: black;">
-                    <div style="border-bottom: 3px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-                        <h1 style="color: #1a237e; margin: 0; font-size: 26px;">Employee Attendance Report</h1>
-                        <div style="text-align: right;">
-                            <p style="margin: 0; font-weight: bold; color: #333; font-size:14px;">Name: ${empName} (ID: ${id})</p>
-                            <p style="margin: 0; font-size: 11px; color: #666;">Generated on: ${new Date().toLocaleString('en-IN')}</p>
-                        </div>
-                    </div>
-                    
-                    <table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:center;" border="1" bordercolor="#ccc">
-                        <thead>
-                            <tr style="background-color:#1a237e; color:white; height: 35px;">
-                                <th style="width:12%; padding:5px;">Date</th>
-                                <th style="width:12%; padding:5px;">Status</th>
-                                <th style="width:10%; padding:5px;">In Time</th>
-                                <th style="width:10%; padding:5px;">Out Time</th>
-                                <th style="width:12%; padding:5px;">Break Time</th>
-                                <th style="width:12%; padding:5px;">Training Time</th>
-                                <th style="width:14%; padding:5px;">Admin Exception</th>
-                                <th style="width:18%; padding:5px;">Total Work Hrs</th>
-                            </tr>
-                        </thead>
-                        <tbody>`;
-
-                rawDataArray.forEach(jsonStr => {
-                    try {
-                        let emp = JSON.parse(jsonStr); if (!emp) return;
-                        let excSecs = emp.exceptionSecs || 0;
-                        let totalWorkSecs = (emp.workSecs || 0) + (emp.trainSecs || 0) + excSecs;
-                        
-                        let wColor = totalWorkSecs >= 28800 ? "#2E7D32" : (totalWorkSecs > 14400 ? "#E65100" : "#C62828");
-                        let statusText = emp.statusText || "Present";
-                        let isLeaveOrOff = ["leave", "off", "holiday", "el", "cl", "sl", "lwp"].some(v => statusText.toLowerCase().includes(v));
-
-                        if (!isLeaveOrOff && emp.mode !== "leave") {
-                            if (emp.isPunchedOut && totalWorkSecs <= 14400 && totalWorkSecs > 0) statusText = "Half Day";
+                            if (emp.isPunchedOut & totalWorkSecs <= 14400 && totalWorkSecs > 0) statusText = "Half Day";
                             else statusText = "Present";
                         }
 
@@ -567,7 +470,7 @@
                             ? `<span style="color:#0288D1; font-weight:bold;">+${formatTime(excSecs)}</span>` 
                             : `<span style="color:#999;">-</span>`;
 
-                        finalHTMLString += `
+                        tableHTML += `
                         <tr style="height: 40px; background-color: white;">
                             <td style="font-weight: bold; color: black; padding:5px;">${dateToPrint}</td>
                             <td style="font-weight: bold; color: ${statusText === 'Present' ? '#2E7D32' : '#C62828'}; padding:5px;">${statusText}</td>
@@ -581,24 +484,34 @@
                     } catch(e) {}
                 });
 
-                finalHTMLString += `</tbody></table>
+                tableHTML += `</tbody></table>
                 <div style="margin-top: 20px; font-size: 11px; color: #777; text-align: center;">
                     * This is an automated system generated report. Contact System Administrator for discrepancies.
-                </div>
                 </div>`;
 
-                // SCALE IS REDUCED TO 2: Ye tab aur phone dono par perfectly chalega bina kisi blank error ke.
+                tempDiv.innerHTML = tableHTML;
+                
+                // IMPORTANT: Body mein append karna jaroori hai taki mobile browser isko render kare
+                document.body.appendChild(tempDiv);
+
                 let opt = {
                     margin: [0.4, 0.4, 0.4, 0.4],
                     filename: `Attendance_Report_${id}.pdf`,
                     image: { type: 'jpeg', quality: 0.98 }, 
-                    html2canvas: { scale: 2, useCORS: true, logging: false }, 
+                    html2canvas: { scale: 2, useCORS: true, logging: false, windowWidth: 1000 }, 
                     jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
                 };
 
-                html2pdf().set(opt).from(finalHTMLString).save().then(() => {
-                    alert("✅ Report downloaded successfully.");
-                });
+                // Thoda delay dete hain taki browser element ko properly Paint kar sake
+                setTimeout(() => {
+                    html2pdf().set(opt).from(tempDiv).save().then(() => {
+                        document.body.removeChild(tempDiv); // Download hone ke baad mita dein
+                        alert("✅ Report downloaded successfully.");
+                    }).catch(err => {
+                        document.body.removeChild(tempDiv);
+                        alert("PDF Generation Failed. Please try again.");
+                    });
+                }, 200);
 
             } catch(e) { alert("Failed to fetch data from the server."); }
         }
@@ -612,6 +525,6 @@
             setTimeout(() => document.getElementById("passMsg").innerText = "", 3000);
             document.getElementById("newAdminPass").value = ""; document.getElementById("newTrainPass").value = "";
         }
-    </script>                                                                      
+    </script>
 </body>
-</html>                                                          
+</html>                                                                                   
