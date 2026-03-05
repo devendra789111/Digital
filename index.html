@@ -227,7 +227,7 @@
             alert("Employee deactivated successfully."); fetchEmployees();
         }
 
-        async function loadLiveStatus() {
+                async function loadLiveStatus() {
             let today = new Date();
             let dateStr = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`; 
             try {
@@ -238,7 +238,7 @@
                 for(let id in EMP_LIST) {
                     if(EMP_LIST[id].status !== "Active") continue; activeCount++;
                     let status = data[id] ? data[id].status : "out";
-                    let displayStatus, dotClass; let actionBtn = "";
+                    let displayStatus, dotClass; let actionBtn = "-";
                     
                     if (status === "in" || status === "work") { 
                         displayStatus = "Punched In (Working)"; dotClass = "dot-green"; 
@@ -253,8 +253,17 @@
                         actionBtn = `<button class="btn-force" style="background:#FF9800; margin-bottom:5px;" onclick="forceCommand('${id}', 'endTrain')">Stop Training</button><br>
                                      <button class="btn-force" style="background:#f44336;" onclick="adminPunchOut('${id}')">Force Punch Out</button>`; 
                     }
-                    else if (status === "leave") { displayStatus = "📅 On Leave / Off"; dotClass = "dot-red"; actionBtn = "-"; }
-                    else { displayStatus = "Not Punched In / Out"; dotClass = "dot-red"; actionBtn = "-"; }
+                    else if (status === "leave") { 
+                        displayStatus = "📅 On Leave / Off"; dotClass = "dot-red"; 
+                    }
+                    else if (status === "out") { 
+                        // 🚨 NEW: UNDO PUNCH OUT BUTTON ADDED HERE 🚨
+                        displayStatus = "Punched Out"; dotClass = "dot-red"; 
+                        actionBtn = `<button class="btn-force" style="background:#2196F3; margin-top:3px;" onclick="undoPunchOut('${id}')">🔄 Undo Punch Out</button>`;
+                    }
+                    else { 
+                        displayStatus = "Not Punched In / Out"; dotClass = "dot-red"; 
+                    }
                     
                     tbody.innerHTML += `<tr><td>${id}</td><td>${EMP_LIST[id].name}</td><td><span class="dot ${dotClass}"></span> ${displayStatus}</td><td>${actionBtn}</td></tr>`;
                 }
@@ -262,6 +271,19 @@
             } catch(e) {}
         }
 
+        // 🚨 NEW: UNDO FUNCTION 🚨
+        async function undoPunchOut(id) {
+            if(!confirm(`क्या आप सच में ${EMP_LIST[id].name} की गलती सुधारना चाहते हैं?\n(उनका Punch-Out हट जाएगा और टाइमर वापस वहीं से शुरू हो जाएगा)`)) return;
+            
+            // Send Undo Command to Employee
+            await fetch(SCRIPT_URL, { 
+                method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, 
+                body: JSON.stringify({ action: "forceAction", id: id, forceType: "undoPunchOut" }) 
+            });
+            alert("✅ कमांड भेज दिया गया है! एम्प्लॉई की ऐप कुछ ही सेकंड में टाइमर वापस चालू कर देगी।");
+            loadLiveStatus();
+        }
+                  
         async function adminPunchOut(id) {
             if(!confirm(`Are you sure you want to manually Punch Out ${EMP_LIST[id].name} (${id})?`)) return;
             let exactTime = new Date().toLocaleTimeString('en-IN');
