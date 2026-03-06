@@ -284,7 +284,17 @@
 
             document.getElementById('empTableBody').innerHTML = `<tr><td colspan="6">Registering... Please wait!</td></tr>`;
             try {
-                let res = await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "deactivateEmployee", id: id }) });
+                let res = await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "addEmployee", name: name, mobile: mobile, aadhar: aadhar, joinDate: joinDate }) });
+                let data = await res.json();
+                alert(`✅ Registration Successful!\nNew Employee ID is: ${data.newId}`);
+                document.getElementById('regName').value = ""; document.getElementById('regMobile').value = ""; document.getElementById('regAadhar').value = ""; document.getElementById('regJoinDate').value = "";
+                fetchEmployees(); 
+            } catch(e) { alert("Registration failed. Please check your connection."); }
+        }
+
+        async function deactivateEmp(id) {
+            if(!confirm(`Are you sure you want to deactivate Employee ID: ${id}?`)) return;
+            await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "deactivateEmployee", id: id }) });
             alert("Employee deactivated successfully."); fetchEmployees();
         }
 
@@ -635,8 +645,7 @@
             document.getElementById('payrollModal').style.display = 'flex';
             document.getElementById('salarySlipArea').style.display = 'none'; 
         }
-
-        function generateSalarySlip() {
+                function generateSalarySlip() {
             let empId = document.getElementById('payEmpId').value.trim();
             let perDay = parseFloat(document.getElementById('payPerDay').value);
             let monthDays = parseInt(document.getElementById('payMonthDays').value);
@@ -745,7 +754,7 @@
             document.getElementById('slipNetPay').innerText = "₹ " + netSalary;
 
             document.getElementById('salarySlipArea').style.display = 'block';
-        }
-    </script>
+                }
+            </script>
 </body>
 </html>
