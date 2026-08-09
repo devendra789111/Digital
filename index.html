@@ -9,7 +9,6 @@
     <!-- html2canvas for converting HTML to Image -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* Custom styles for different coupon formats */
         .format-coupon {
             border: 2px dashed #3b82f6;
             border-radius: 12px;
@@ -78,20 +77,19 @@
             </div>
 
             <!-- Action Button -->
-            <button onclick="sendToWhatsApp()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition duration-200">
+            <button onclick="sendToWhatsApp()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition duration-200 shadow-md">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/>
                 </svg>
-                Generate Image & Send
+                Send Image & Message to WhatsApp
             </button>
-            <p class="text-xs text-gray-400 text-center">Image will download automatically, then WhatsApp will open.</p>
+            <p class="text-xs text-gray-400 text-center">Mobile pe direct WhatsApp share menu khulega jisme image aur text dono select kar sakte hain.</p>
         </div>
 
         <!-- Right Side: Live Preview -->
         <div class="flex-1 flex flex-col justify-center items-center">
             <h3 class="text-sm font-medium text-gray-700 mb-4 w-full text-left">Live Image Preview:</h3>
             
-            <!-- This is the container that will be converted to an image -->
             <div id="coupon-preview" class="format-coupon w-full p-6 text-center shadow-sm transition-all duration-300">
                 <h2 class="text-xl font-bold uppercase tracking-wide mb-1 institute-name">Quality Education</h2>
                 <p class="text-sm mb-4 font-medium tagline">Learn More. Score More. Achieve More. 📚</p>
@@ -109,7 +107,6 @@
     </div>
 
     <script>
-        // Pre-defined text message
         const messageText = `🎁 A special offer for you!
 
 Coupon Code: QEDD21
@@ -117,20 +114,15 @@ Coupon Code: QEDD21
 
 Learn More. Score More. Achieve More. 📚`;
 
-        // Function to change the visual format of the coupon
         function changeFormat() {
             const select = document.getElementById('formatSelect');
             const preview = document.getElementById('coupon-preview');
             const instituteName = preview.querySelector('.institute-name');
             const codeText = preview.querySelector('.code-text');
             
-            // Remove existing format classes
             preview.classList.remove('format-coupon', 'format-ticket', 'format-pass');
-            
-            // Add selected format class
             preview.classList.add(select.value);
 
-            // Dynamic color adjustments based on format
             if(select.value === 'format-pass') {
                 instituteName.classList.add('text-yellow-400');
                 instituteName.classList.remove('text-gray-800');
@@ -144,7 +136,6 @@ Learn More. Score More. Achieve More. 📚`;
             }
         }
 
-        // Function to download image and open WhatsApp
         async function sendToWhatsApp() {
             const phoneInput = document.getElementById('phoneInput').value;
             
@@ -156,28 +147,48 @@ Learn More. Score More. Achieve More. 📚`;
             const previewElement = document.getElementById('coupon-preview');
             
             try {
-                // 1. Generate Image from the preview div using html2canvas
+                // Generate high-resolution image from preview HTML
                 const canvas = await html2canvas(previewElement, {
-                    scale: 2, // High resolution
+                    scale: 2,
                     backgroundColor: null
                 });
                 
-                // Convert canvas to data URL and trigger download
-                const image = canvas.toDataURL("image/png");
-                const link = document.createElement('a');
-                link.download = `Quality_Education_Offer_${phoneInput}.png`;
-                link.href = image;
-                link.click(); // Automatically downloads the image
+                canvas.toBlob(async (blob) => {
+                    const fileName = `Quality_Education_Coupon_${phoneInput}.png`;
+                    const file = new File([blob], fileName, { type: "image/png" });
+                    
+                    const shareData = {
+                        title: 'Quality Education Offer',
+                        text: messageText,
+                        files: [file]
+                    };
 
-                // 2. Open WhatsApp with pre-filled text
-                const formattedNumber = "91" + phoneInput; // Assuming India country code
-                const encodedMessage = encodeURIComponent(messageText);
-                const whatsappUrl = `https://wa.me/${formattedNumber}?text=${encodedMessage}`;
-                
-                // Small delay to ensure download starts before page navigation
-                setTimeout(() => {
-                    window.open(whatsappUrl, '_blank');
-                }, 500);
+                    // Check if mobile browser supports direct file sharing (Web Share API)
+                    if (navigator.canShare && navigator.canShare(shareData)) {
+                        try {
+                            await navigator.share(shareData);
+                            return;
+                        } catch (err) {
+                            console.log("Sharing cancelled or failed", err);
+                        }
+                    }
+
+                    // Fallback for Desktop / browsers without direct file sharing support:
+                    // Automatically download the image and open WhatsApp with text
+                    const link = document.createElement('a');
+                    link.download = fileName;
+                    link.href = canvas.toDataURL("image/png");
+                    link.click();
+
+                    const formattedNumber = "91" + phoneInput;
+                    const encodedMessage = encodeURIComponent(messageText);
+                    const whatsappUrl = `https://wa.me/${formattedNumber}?text=${encodedMessage}`;
+                    
+                    setTimeout(() => {
+                        window.open(whatsappUrl, '_blank');
+                    }, 500);
+
+                }, 'image/png');
 
             } catch (error) {
                 console.error("Error generating image: ", error);
@@ -185,7 +196,6 @@ Learn More. Score More. Achieve More. 📚`;
             }
         }
 
-        // Initialize the correct colors on load
         changeFormat();
     </script>
 </body>
