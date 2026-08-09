@@ -3,94 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quality Education - WhatsApp Sender</title>
-    <!-- Tailwind CSS for styling -->
+    <title>Quality Education - Offer Broadcast</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome for Icons -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- HTML2Canvas Library to convert HTML to Image -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Ticket Design CSS */
+        .ticket {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            position: relative;
+        }
+        .ticket::before, .ticket::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 30px;
+            height: 30px;
+            background-color: #f9fafb; /* Matches outer background */
+            border-radius: 50%;
+            transform: translateY(-50%);
+        }
+        .ticket::before { left: -15px; }
+        .ticket::after { right: -15px; }
+        .dashed-line {
+            border-left: 2px dashed rgba(255,255,255,0.4);
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center p-4">
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-6">
 
-    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-        <!-- Header -->
-        <div class="bg-blue-700 p-6 text-center">
-            <h1 class="text-2xl font-bold text-white tracking-wide">Quality Education</h1>
-            <p class="text-blue-200 text-sm mt-1">Student Broadcast Portal</p>
-        </div>
+    <div class="max-w-4xl w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 flex flex-col md:flex-row">
+        
+        <!-- Left Column: Form & Message -->
+        <div class="md:w-1/2 p-8 bg-white">
+            <h1 class="text-2xl font-bold text-blue-800 mb-1">Quality Education</h1>
+            <p class="text-gray-500 text-sm mb-6 font-medium">Student Offer Broadcast Portal</p>
 
-        <!-- Form Area -->
-        <div class="p-6">
             <div class="mb-5">
-                <label for="phoneNumber" class="block text-sm font-semibold text-gray-700 mb-2">Student WhatsApp Number</label>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Student WhatsApp Number</label>
                 <div class="flex relative rounded-md shadow-sm">
-                    <span class="inline-flex items-center px-4 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm font-medium">
-                        +91
-                    </span>
-                    <input type="tel" id="phoneNumber" class="flex-1 min-w-0 block w-full px-4 py-3 rounded-none rounded-r-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Enter 10-digit number" maxlength="10">
+                    <span class="inline-flex items-center px-4 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 font-medium">+91</span>
+                    <input type="tel" id="phoneNumber" class="flex-1 block w-full px-4 py-3 rounded-none rounded-r-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter 10-digit number" maxlength="10">
                 </div>
             </div>
 
             <div class="mb-5">
-                <label for="messageText" class="block text-sm font-semibold text-gray-700 mb-2">Message Content</label>
-                <!-- Default text with professional formatting and coupon code -->
-                <textarea id="messageText" rows="7" class="shadow-sm block w-full focus:ring-blue-500 focus:border-blue-500 sm:text-sm border border-gray-300 rounded-md p-3 text-gray-700">Namaskar! 🙏
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Message Content</label>
+                <textarea id="messageText" rows="6" class="w-full border border-gray-300 rounded-md p-3 text-gray-700 focus:ring-blue-500 focus:border-blue-500">🎁 A special offer for you!
 
-Quality Education ki taraf se aapke liye ek special offer! 🎉
+Coupon Code: *QEDD21*
+*21% OFF* on Quality Education Courses & Test Series.
 
-Abhi hamare sabhi Courses aur Test Series par payein 21% ka flat discount. Apni taiyari ko aur behtar banayein.
-
-🎟️ Coupon Code: *QEDD21*
-
-Aaj hi is offer ka labh uthayein. Kisi bhi sahayata ke liye humse sampark karein.
-
-Shubhkamnayein,
-Quality Education</textarea>
-                <p class="mt-2 text-xs text-gray-500"><i class="fas fa-info-circle mr-1"></i> WhatsApp link pre-fills text. Please attach the coupon image manually once the chat opens.</p>
+Learn More. Score More. Achieve More. 📚</textarea>
             </div>
 
-            <button onclick="sendToWhatsApp()" class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
-                <i class="fab fa-whatsapp text-xl mr-2"></i> Send Message
+            <button onclick="sendToWhatsApp()" class="w-full flex justify-center items-center py-3 px-4 rounded-lg shadow text-white bg-green-600 hover:bg-green-700 font-bold transition-colors">
+                <i class="fab fa-whatsapp text-xl mr-2"></i> Open WhatsApp Chat
             </button>
+            <p class="mt-3 text-xs text-center text-gray-500">Step 2: Chat khulne par Image paste karein aur send karein.</p>
         </div>
-    </div>
 
-    <!-- Instructions / Footer -->
-    <div class="mt-8 text-center max-w-md text-sm text-gray-500">
-        <p>This tool will open a new tab directly to the student's WhatsApp chat with the pre-written promotional message.</p>
+        <!-- Right Column: Image Generation Area -->
+        <div class="md:w-1/2 p-8 bg-gray-100 flex flex-col items-center justify-center border-l border-gray-200">
+            <h2 class="text-lg font-bold text-gray-700 mb-4 w-full text-center">Step 1: Generate & Copy Image</h2>
+            
+            <!-- This is the HTML Coupon that will be converted to an image -->
+            <div id="couponImage" class="ticket w-full max-w-sm rounded-xl text-white shadow-lg flex overflow-hidden mb-6 p-4">
+                <div class="w-2/3 pr-4 flex flex-col justify-center">
+                    <h3 class="text-xl font-extrabold uppercase tracking-wider text-yellow-300 mb-1">Special Pass</h3>
+                    <p class="text-sm font-medium mb-3">Quality Education</p>
+                    <div class="bg-white/20 rounded py-1 px-2 inline-block w-max border border-white/40 mb-2">
+                        <span class="text-xs">USE CODE:</span> <span class="font-bold tracking-widest ml-1">QEDD21</span>
+                    </div>
+                    <p class="text-xs text-blue-100">Valid on all Courses & Test Series</p>
+                </div>
+                <div class="w-1/3 dashed-line pl-4 flex flex-col justify-center items-center text-center">
+                    <span class="text-3xl font-black text-yellow-300">21%</span>
+                    <span class="text-lg font-bold uppercase">OFF</span>
+                </div>
+            </div>
+
+            <!-- Image Actions -->
+            <div class="flex gap-3 w-full max-w-sm">
+                <button onclick="copyCouponImage()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-colors shadow">
+                    <i class="fas fa-copy mr-2"></i> Copy Image
+                </button>
+                <button onclick="downloadCouponImage()" class="flex-1 bg-gray-800 hover:bg-gray-900 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-colors shadow">
+                    <i class="fas fa-download mr-2"></i> Download
+                </button>
+            </div>
+            <p id="copyStatus" class="mt-3 text-sm font-medium text-green-600 hidden">✅ Image copied to clipboard!</p>
+        </div>
+
     </div>
 
     <script>
+        // Copy the HTML element as an Image to Clipboard
+        async function copyCouponImage() {
+            const couponElement = document.getElementById('couponImage');
+            const statusText = document.getElementById('copyStatus');
+            
+            try {
+                const canvas = await html2canvas(couponElement, { scale: 2, backgroundColor: null });
+                canvas.toBlob(async function(blob) {
+                    try {
+                        const item = new ClipboardItem({ 'image/png': blob });
+                        await navigator.clipboard.write([item]);
+                        statusText.innerText = "✅ Image copied to clipboard!";
+                        statusText.classList.remove('hidden');
+                        setTimeout(() => statusText.classList.add('hidden'), 3000);
+                    } catch (err) {
+                        console.error("Clipboard API failed: ", err);
+                        alert("Aapka browser direct image copy support nahi karta. Kripya 'Download' button ka use karein.");
+                    }
+                }, 'image/png');
+            } catch (err) {
+                console.error("html2canvas failed: ", err);
+            }
+        }
+
+        // Download the HTML element as an Image
+        async function downloadCouponImage() {
+            const couponElement = document.getElementById('couponImage');
+            const canvas = await html2canvas(couponElement, { scale: 2 });
+            const link = document.createElement('a');
+            link.download = 'Quality-Education-Offer.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Send Text to WhatsApp
         function sendToWhatsApp() {
-            // Get inputs
             let phoneInput = document.getElementById('phoneNumber').value.trim();
             let messageInput = document.getElementById('messageText').value.trim();
 
-            // Validation
             if (phoneInput.length < 10 || isNaN(phoneInput)) {
                 alert("Kripya sahi 10-digit mobile number enter karein.");
                 return;
             }
 
-            // Clean number (removing spaces or special chars if any)
             let cleanPhone = phoneInput.replace(/\D/g, '');
-
-            // Encode message for URL
             let encodedMessage = encodeURIComponent(messageInput);
-
-            // Create WhatsApp URL (Defaults to Indian country code 91)
             let whatsappUrl = `https://api.whatsapp.com/send?phone=91${cleanPhone}&text=${encodedMessage}`;
-
-            // Open in new tab
-            window.open(whatsappUrl, '_blank');
             
-            // Optional: Clear phone number input after sending for the next student
-            document.getElementById('phoneNumber').value = '';
+            window.open(whatsappUrl, '_blank');
+            document.getElementById('phoneNumber').value = ''; // Optional reset
         }
     </script>
 </body>
